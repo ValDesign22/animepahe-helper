@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "AnimePahe Helper",
+  "version": "1.0",
+  "description": "Enhances the AnimePahe website with additional features.",
+  "icons": {
+    "48": "icons/animepahe-helper-48.png"
+  },
+  "permissions": ["storage", "scripting", "activeTab"],
+  "host_permissions": ["*://animepahe.si/*", "*://*.animepahe.si/*"],
+  "content_scripts": [
+    {
+      "matches": ["*://animepahe.si/*", "*://*.animepahe.si/*"],
+      "js": [
+        "src/content/storage.js",
+        "src/lib/utils.js",
+        "src/content/inject.js"
+      ],
+      "css": ["src/content/styles.css"]
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "animepahe-helper@local"
+    }
+  }
+}

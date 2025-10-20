@@ -4,7 +4,7 @@
     "color:#D5015B",
   );
 
-  const { removeFromHistory } = window.AnimePaheHelperStorage;
+  const { getHistory, removeFromHistory } = window.AnimePaheHelperStorage;
 
   function parsePlayPath(path = window.location.pathname) {
     const match = path.match(/^\/play\/([\w-]+)\/([\w-]+)/);
@@ -197,6 +197,7 @@
         e.preventDefault();
         removeFromHistory(entry.anime.id);
         historyAnimeWrap.remove();
+        renderHistory(getHistory());
       });
       animeDeleteWrap.appendChild(animeDelete);
       animeLabelWrap.appendChild(animeDeleteWrap);

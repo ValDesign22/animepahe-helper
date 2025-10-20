@@ -113,6 +113,41 @@
     saveData(data);
   }
 
+  function createList(name) {
+    const data = loadData();
+    if (!data.lists.find((list) => list.name === name)) {
+      data.lists.push({
+        name,
+        anime_ids: [],
+      });
+      saveData(data);
+    }
+  }
+
+  function deleteList(name) {
+    const data = loadData();
+    data.lists = data.lists.filter((list) => list.name !== name);
+    saveData(data);
+  }
+
+  function addToList(listName, anime_id) {
+    const data = loadData();
+    const list = data.lists.find((l) => l.name === listName);
+    if (list && !list.anime_ids.includes(anime_id)) {
+      list.anime_ids.push(anime_id);
+      saveData(data);
+    }
+  }
+
+  function removeFromList(listName, anime_id) {
+    const data = loadData();
+    const list = data.lists.find((l) => l.name === listName);
+    if (list) {
+      list.anime_ids = list.anime_ids.filter((id) => id !== anime_id);
+      saveData(data);
+    }
+  }
+
   function registerAnime(anime_id, name, cover) {
     const data = loadData();
     if (!data.animes[anime_id]) {
@@ -133,6 +168,10 @@
     updateHistory,
     removeFromHistory,
     clearHistory,
+    createList,
+    deleteList,
+    addToList,
+    removeFromList,
     registerAnime,
   };
 

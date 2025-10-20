@@ -113,6 +113,16 @@
     saveData(data);
   }
 
+  function getLists() {
+    const data = loadData();
+    return data.lists;
+  }
+
+  function getList(name) {
+    const data = loadData();
+    return data.lists.find((list) => list.name === name) || null;
+  }
+
   function createList(name) {
     const data = loadData();
     if (!data.lists.find((list) => list.name === name)) {
@@ -148,6 +158,16 @@
     }
   }
 
+  function getAnimes() {
+    const data = loadData();
+    return data.animes;
+  }
+
+  function getAnime(anime_id) {
+    const data = loadData();
+    return data.animes[anime_id] || null;
+  }
+
   function registerAnime(anime_id, name, cover) {
     const data = loadData();
     if (!data.animes[anime_id]) {
@@ -168,10 +188,14 @@
     updateHistory,
     removeFromHistory,
     clearHistory,
+    getLists,
+    getList,
     createList,
     deleteList,
     addToList,
     removeFromList,
+    getAnimes,
+    getAnime,
     registerAnime,
   };
 

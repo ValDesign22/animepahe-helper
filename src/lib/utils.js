@@ -4,7 +4,8 @@
     "color:#D5015B",
   );
 
-  const { getHistory, removeFromHistory } = window.AnimePaheHelperStorage;
+  const { getHistory, removeFromHistory, createList, addToList } =
+    window.AnimePaheHelperStorage;
 
   function parsePlayPath(path = window.location.pathname) {
     const match = path.match(/^\/play\/([\w-]+)\/([\w-]+)/);
@@ -12,6 +13,14 @@
     return {
       anime_id: match[1],
       video_id: match[2],
+    };
+  }
+
+  function parseAnimePath(path = window.location.pathname) {
+    const match = path.match(/^\/anime\/([\w-]+)/);
+    if (!match) return null;
+    return {
+      anime_id: match[1],
     };
   }
 
@@ -263,9 +272,41 @@
     return historyDiv;
   }
 
+  function createAddToListButton(anime) {
+    const navUl = document.evaluate(
+      "/html/body/section/article/div[2]/div[1]/nav/ul",
+      document,
+      null,
+      XPathResult.FIRST_ORDERED_NODE_TYPE,
+      null,
+    ).singleNodeValue;
+
+    if (!navUl) return;
+
+    const listButtonLi =
+      document.getElementById("add-to-list") || document.createElement("li");
+    listButtonLi.id = "add-to-list";
+    listButtonLi.className = "col";
+    listButtonLi.innerHTML = "";
+
+    const listButtonLink = document.createElement("a");
+    listButtonLink.setAttribute("data-tab", "add-to-list");
+    listButtonLink.title = "Add to List";
+    listButtonLink.textContent = "Add to List";
+    listButtonLink.addEventListener("click", (e) => {
+      e.preventDefault();
+    });
+
+    listButtonLi.appendChild(listButtonLink);
+
+    navUl.appendChild(listButtonLi);
+  }
+
   window.AnimePaheHelperUtils = {
     parsePlayPath,
+    parseAnimePath,
     renderHistory,
+    createAddToListButton,
   };
 
   console.log(

@@ -1,7 +1,12 @@
 (() => {
-  const { getHistory, updateHistory, registerAnime } =
+  const { getHistory, updateHistory, getAnime, registerAnime } =
     window.AnimePaheHelperStorage;
-  const { parsePlayPath, renderHistory } = window.AnimePaheHelperUtils;
+  const {
+    parsePlayPath,
+    parseAnimePath,
+    renderHistory,
+    createAddToListButton,
+  } = window.AnimePaheHelperUtils;
 
   if (window.location.pathname === "/") {
     const history = getHistory();
@@ -15,6 +20,36 @@
       "%c[AnimePaheHelper] Injected history section on homepage.",
       "color:#D5015B",
     );
+    return;
+  }
+
+  if (window.location.pathname.startsWith("/anime/")) {
+    const info = parseAnimePath();
+    if (!info) return;
+
+    let anime = getAnime(info.anime_id);
+    if (!anime) {
+      const titleElement = document.evaluate(
+        "/html/body/section/article/div[1]/header/div/h1/span",
+        document,
+        null,
+        XPathResult.FIRST_ORDERED_NODE_TYPE,
+        null,
+      ).singleNodeValue;
+      const coverElement = document.evaluate(
+        "/html/body/section/article/div[1]/header/div/div/div/a/img",
+        document,
+        null,
+        XPathResult.FIRST_ORDERED_NODE_TYPE,
+        null,
+      ).singleNodeValue;
+      const title = titleElement
+        ? titleElement.textContent.trim()
+        : "Unknown Title";
+      const cover = coverElement ? coverElement.getAttribute("src") : "";
+      anime = registerAnime(info.anime_id, title, cover);
+    }
+    createAddToListButton(anime);
     return;
   }
 

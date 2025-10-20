@@ -256,6 +256,38 @@
     .history-list-wrapper
     .history-list
     .history-anime-wrap
+    .history-anime
+    .anime-label-wrap
+    .anime-label
+    .anime-number-wrap {
+    flex: 0 0 auto;
+    text-align: right;
+    align-self: flex-end;
+    padding: 10px 15px 10px 0;
+}
+
+.history-section
+    .history-list-wrapper
+    .history-list
+    .history-anime-wrap
+    .history-anime
+    .anime-label-wrap
+    .anime-label
+    .anime-number-wrap
+    .anime-number {
+    position: relative;
+    display: inline-block;
+    color: #fff;
+    font-size: 1.2rem;
+    font-weight: 600;
+    line-height: normal;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+}
+
+.history-section
+    .history-list-wrapper
+    .history-list
+    .history-anime-wrap
     .history-anime:hover
     .anime-snapshot
     svg {

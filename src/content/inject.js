@@ -1,24 +1,15 @@
 (() => {
   const { getHistory, updateHistory, registerAnime } =
     window.AnimePaheHelperStorage;
-  const { parsePlayPath, createHistoryElement } = window.AnimePaheHelperUtils;
+  const { parsePlayPath, renderHistory } = window.AnimePaheHelperUtils;
 
   if (window.location.pathname === "/") {
     const history = getHistory();
-    console.log("%c[AnimePaheHelper] User history:", "color:#D5015B", history);
 
-    const contentWrapper = document.evaluate(
-      "/html/body/section/article/div",
-      document,
-      null,
-      XPathResult.FIRST_ORDERED_NODE_TYPE,
-      null,
-    ).singleNodeValue;
+    const searchParams = new URLSearchParams(window.location.search);
+    const currentPage = parseInt(searchParams.get("history-page")) || 1;
 
-    if (contentWrapper) {
-      const historyElement = createHistoryElement(history);
-      contentWrapper.insertBefore(historyElement, contentWrapper.firstChild);
-    }
+    renderHistory(history, currentPage);
 
     console.log(
       "%c[AnimePaheHelper] Injected history section on homepage.",
@@ -57,11 +48,15 @@
 
       const episodeMenu = document.getElementById("episodeMenu");
       if (episodeMenu) {
+        const episodeNumber = episodeMenu.textContent
+          .trim()
+          .replace("Episode ", "")
+          .trim();
         registerAnime(anime_id, anime_title, anime_cover);
-        updateHistory(anime_id, episodeMenu.textContent.trim(), video_id);
+        updateHistory(anime_id, episodeNumber, video_id);
 
         console.log(
-          `%c[AnimePaheHelper] Updated history for ${anime_title} - Episode ${episodeMenu.textContent.trim()}`,
+          `%c[AnimePaheHelper] Updated history for ${anime_title} - Episode ${episodeNumber}`,
           "color:#D5015B",
         );
       }

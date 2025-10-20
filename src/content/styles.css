@@ -10,8 +10,27 @@
 }
 
 .history-section h2 {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
     margin-bottom: 15px;
     font-weight: 300;
+}
+
+.history-section h2 .clear-history-btn {
+    font-size: 0.8rem;
+    margin-left: 15px;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 3px;
+    background-color: #d5015b;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.history-section h2 .clear-history-btn:hover {
+    background-color: #a40045;
 }
 
 .history-section .history-list-wrapper {

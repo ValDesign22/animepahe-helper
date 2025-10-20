@@ -141,6 +141,18 @@
     const title = document.createElement("h2");
     title.textContent = "Recently Watched";
 
+    const clearButton = document.createElement("button");
+    clearButton.className = "clear-history-btn";
+    clearButton.textContent = "Clear History";
+    clearButton.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (confirm("Are you sure you want to clear your watch history?")) {
+        window.AnimePaheHelperStorage.clearHistory();
+        renderHistory([]);
+      }
+    });
+    title.appendChild(clearButton);
+
     const historyListWrapper = document.createElement("div");
     historyListWrapper.className = "history-list-wrapper";
 

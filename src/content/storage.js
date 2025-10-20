@@ -101,6 +101,12 @@
     saveData(data);
   }
 
+  function removeFromHistory(anime_id) {
+    const data = loadData();
+    data.history = data.history.filter((entry) => entry.anime_id !== anime_id);
+    saveData(data);
+  }
+
   function registerAnime(anime_id, name, cover) {
     const data = loadData();
     if (!data.animes[anime_id]) {
@@ -119,6 +125,7 @@
     saveData,
     getHistory,
     updateHistory,
+    removeFromHistory,
     registerAnime,
   };
 

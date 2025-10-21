@@ -8,7 +8,7 @@
     createAddToListButton,
   } = window.AnimePaheHelperUtils;
 
-  if (window.location.pathname === "/") {
+  function homeHandler() {
     const history = getHistory();
 
     const searchParams = new URLSearchParams(window.location.search);
@@ -20,10 +20,9 @@
       "%c[AnimePaheHelper] Injected history section on homepage.",
       "color:#D5015B",
     );
-    return;
   }
 
-  if (window.location.pathname.startsWith("/anime/")) {
+  function animeHandler() {
     const info = parseAnimePath();
     if (!info) return;
 
@@ -50,10 +49,9 @@
       anime = registerAnime(info.anime_id, title, cover);
     }
     createAddToListButton(anime);
-    return;
   }
 
-  if (window.location.pathname.startsWith("/play/")) {
+  function playHandler() {
     const info = parsePlayPath();
     if (info) {
       const { anime_id, video_id } = info;
@@ -96,6 +94,25 @@
         );
       }
     }
-    return;
   }
+
+  function handle() {
+    if (window.location.pathname === "/") {
+      homeHandler()
+      return;
+    }
+
+    if (window.location.pathname.startsWith("/anime/")) {
+      animeHandler()
+      return;
+    }
+
+    if (window.location.pathname.startsWith("/play/")) {
+      playHandler()
+      return;
+    }
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", handle);
+  else handle();
 })();

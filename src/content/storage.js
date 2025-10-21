@@ -7,32 +7,35 @@
   const STORAGE_KEY = "animepahe_helper_data";
   const CURRENT_VERSION = 1;
 
-  /*
-    data: {
-      version: number,
-      animes: { [anime_id: string]: Anime },
-      history: Array<HistoryEntry>,
-      lists: Array<AnimeList>,
-    }
+  /**
+   * @typedef {Object} Anime
+   * @property {string} id
+   * @property {string} title
+   * @property {string} cover
+   */
 
-    Anime: {
-      id: string,
-      title: string,
-      cover: string,
-    }
+  /**
+   * @typedef {Object} HistoryEntry
+   * @property {string} anime_id
+   * @property {string} episode
+   * @property {string} video_id
+   * @property {number} watched_at
+   */
 
-    HistoryEntry: {
-      anime_id: string,
-      episode: number,
-      video_id: string,
-      watched_at: number,
-    }
+  /**
+   * @typedef {Object} AnimeList
+   * @property {string} name
+   * @property {Array<string>} anime_ids
+   */
 
-    AnimeList: {
-      name: string,
-      anime_ids: Array<string>,
-    }
-  */
+  /**
+   * @typedef {Object} Data
+   * @property {number} version
+   * @property {{[anime_id: string]: Anime}} animes
+   * @property {Array<HistoryEntry>} history
+   * @property {Array<AnimeList>} lists
+   */
+
   const defaultData = {
     version: CURRENT_VERSION,
     animes: {},
@@ -40,6 +43,9 @@
     lists: [],
   };
 
+  /**
+   * @returns {Data}
+   */
   function loadData() {
     const rawData = localStorage.getItem(STORAGE_KEY);
     if (!rawData) {
@@ -67,6 +73,9 @@
     }
   }
 
+  /**
+   * @param {Data} data
+   */
   function saveData(data) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   }
@@ -75,10 +84,15 @@
     const data = loadData();
     return data.history.map((historyEntry) => ({
       ...historyEntry,
-      anime: data.animes[historyEntry.anime_id] || null,
+      anime: data.animes[historyEntry.anime_id],
     }));
   }
 
+  /**
+   * @param {string} anime_id
+   * @param {string} episode
+   * @param {string} video_id
+   */
   function updateHistory(anime_id, episode, video_id) {
     const data = loadData();
     const now = Date.now();
@@ -101,15 +115,20 @@
     saveData(data);
   }
 
+  /**
+   * @param {string} anime_id
+   */
   function removeFromHistory(anime_id) {
     const data = loadData();
     data.history = data.history.filter((entry) => entry.anime_id !== anime_id);
+    cleanUnusedAnimes(data);
     saveData(data);
   }
 
   function clearHistory() {
     const data = loadData();
     data.history = [];
+    cleanUnusedAnimes(data);
     saveData(data);
   }
 
@@ -118,11 +137,17 @@
     return data.lists;
   }
 
+  /**
+   * @param {string} name
+   */
   function getList(name) {
     const data = loadData();
     return data.lists.find((list) => list.name === name) || null;
   }
 
+  /**
+   * @param {string} name
+   */
   function createList(name) {
     const data = loadData();
     if (!data.lists.find((list) => list.name === name)) {
@@ -134,12 +159,20 @@
     }
   }
 
+  /**
+   * @param {string} name
+   */
   function deleteList(name) {
     const data = loadData();
     data.lists = data.lists.filter((list) => list.name !== name);
+    cleanUnusedAnimes(data);
     saveData(data);
   }
 
+  /**
+   * @param {string} listName
+   * @param {string} anime_id
+   */
   function addToList(listName, anime_id) {
     const data = loadData();
     const list = data.lists.find((l) => l.name === listName);
@@ -149,13 +182,18 @@
     }
   }
 
+  /**
+   * @param {string} listName
+   * @param {string} anime_id
+   */
   function removeFromList(listName, anime_id) {
     const data = loadData();
     const list = data.lists.find((l) => l.name === listName);
     if (list) {
       list.anime_ids = list.anime_ids.filter((id) => id !== anime_id);
-      saveData(data);
     }
+    cleanUnusedAnimes(data);
+    saveData(data);
   }
 
   function getAnimes() {
@@ -163,22 +201,55 @@
     return data.animes;
   }
 
+  /**
+   * @param {string} anime_id
+   * @returns {Anime | null}
+   */
   function getAnime(anime_id) {
     const data = loadData();
     return data.animes[anime_id] || null;
   }
 
+  /**
+   * @param {string} anime_id
+   * @param {string} name
+   * @param {string} cover
+   * @returns {Anime}
+   */
   function registerAnime(anime_id, name, cover) {
     const data = loadData();
-    if (!data.animes[anime_id]) {
-      data.animes[anime_id] = {
-        id: anime_id,
-        title: name,
-        cover: cover,
-      };
-      saveData(data);
+    data.animes[anime_id] = {
+      id: anime_id,
+      title: name,
+      cover: cover,
     }
+    saveData(data);
     return data.animes[anime_id];
+  }
+
+  /**
+   * @param {string} anime_id
+   */
+  function deleteAnime(anime_id) {
+    const data = loadData();
+    delete data.animes[anime_id];
+    saveData(data);
+  }
+
+  /**
+   * @param {Data} data
+   */
+  function cleanUnusedAnimes(data) {
+    const usedIds = new Set([
+      ...data.history.map(entry => entry.anime_id),
+      ...data.lists.flatMap(list => list.anime_ids),
+    ]);
+
+    for (const anime_id in data.animes) {
+      if (!usedIds.has(anime_id)) {
+        delete data.animes[anime_id];
+      }
+    }
   }
 
   window.AnimePaheHelperStorage = {
@@ -197,6 +268,8 @@
     getAnimes,
     getAnime,
     registerAnime,
+    deleteAnime,
+    cleanUnusedAnimes,
   };
 
   console.log(

@@ -97,22 +97,12 @@
   }
 
   function handle() {
-    if (window.location.pathname === "/") {
-      homeHandler()
-      return;
-    }
-
-    if (window.location.pathname.startsWith("/anime/")) {
-      animeHandler()
-      return;
-    }
-
-    if (window.location.pathname.startsWith("/play/")) {
-      playHandler()
-      return;
-    }
+    const path = window.location.pathname;
+    if (path === "/") return homeHandler();
+    if (path.startsWith("/anime/")) return animeHandler();
+    if (path.startsWith("/play/")) return playHandler();
   }
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", handle);
-  else handle();
+  if (document.readyState !== "loading") handle();
+  else document.addEventListener("DOMContentLoaded", handle);
 })();

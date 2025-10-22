@@ -222,7 +222,7 @@
       id: anime_id,
       title: name,
       cover: cover,
-    }
+    };
     saveData(data);
     return data.animes[anime_id];
   }
@@ -241,8 +241,8 @@
    */
   function cleanUnusedAnimes(data) {
     const usedIds = new Set([
-      ...data.history.map(entry => entry.anime_id),
-      ...data.lists.flatMap(list => list.anime_ids),
+      ...data.history.map((entry) => entry.anime_id),
+      ...data.lists.flatMap((list) => list.anime_ids),
     ]);
 
     for (const anime_id in data.animes) {

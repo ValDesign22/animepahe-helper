@@ -41,9 +41,9 @@
       renderHistory(history, newPage);
     });
 
-    newHistorySection
-      .querySelector(".history-list-wrapper")
-      .appendChild(navigation);
+    if (!newHistorySection.classList.contains("empty")) {
+      newHistorySection.appendChild(navigation);
+    }
 
     const existingHistorySection = document.querySelector(".history-section");
     if (existingHistorySection) {
@@ -140,8 +140,9 @@
 
   function createHistoryElement(historySlice) {
     if (historySlice.length === 0) {
-      return (document.createElement("div").className =
-        "history-section empty");
+      const empty = document.createElement("div");
+      empty.className = "history-section empty";
+      return empty;
     }
 
     const historyDiv = document.createElement("div");
@@ -157,6 +158,7 @@
       e.preventDefault();
       if (confirm("Are you sure you want to clear your watch history?")) {
         window.AnimePaheHelperStorage.clearHistory();
+        console.log(getHistory());
         renderHistory([]);
       }
     });

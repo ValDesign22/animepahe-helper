@@ -5,7 +5,7 @@
     margin: 25px auto 20px;
 }
 
-.history-section:has(.empty) {
+.history-section.empty {
     min-height: auto;
 }
 

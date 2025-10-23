@@ -1,20 +1,21 @@
 (() => {
-  const { getHistory, updateHistory, getAnime, registerAnime } =
+  const { getHistory, updateHistory, getWatchlist, getAnime, registerAnime } =
     window.AnimePaheHelperStorage;
-  const {
-    parsePlayPath,
-    parseAnimePath,
-    renderHistory,
-    createAddToListButton,
-  } = window.AnimePaheHelperUtils;
+  const { parsePlayPath, parseAnimePath, renderGrid, createWatchlistButton } =
+    window.AnimePaheHelperUtils;
 
   function homeHandler() {
+    const watchlist = getWatchlist();
+    console.log(watchlist);
     const history = getHistory();
 
     const searchParams = new URLSearchParams(window.location.search);
-    const currentPage = parseInt(searchParams.get("history-page")) || 1;
+    const currentWatchlistPage =
+      parseInt(searchParams.get("watchlist-page")) || 1;
+    const currentHistoryPage = parseInt(searchParams.get("history-page")) || 1;
 
-    renderHistory(history, currentPage);
+    renderGrid(watchlist, "Watchlist", "watchlist", currentWatchlistPage);
+    renderGrid(history, "Recently Watched", "history", currentHistoryPage);
 
     console.log(
       "%c[AnimePaheHelper] Injected history section on homepage.",
@@ -48,7 +49,7 @@
       const cover = coverElement ? coverElement.getAttribute("src") : "";
       anime = registerAnime(info.anime_id, title, cover);
     }
-    createAddToListButton(anime);
+    createWatchlistButton(anime);
   }
 
   function playHandler() {

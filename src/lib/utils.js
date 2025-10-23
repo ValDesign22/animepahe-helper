@@ -4,8 +4,13 @@
     "color:#D5015B",
   );
 
-  const { getHistory, removeFromHistory, createList, addToList } =
-    window.AnimePaheHelperStorage;
+  const {
+    getHistory,
+    removeFromHistory,
+    getWatchlist,
+    toggleWatchlist,
+    isInWatchlist,
+  } = window.AnimePaheHelperStorage;
 
   function parsePlayPath(path = window.location.pathname) {
     const match = path.match(/^\/play\/([\w-]+)\/([\w-]+)/);
@@ -26,28 +31,31 @@
 
   const ITEMS_PER_PAGE = 6;
 
-  function renderHistory(history, page = 1) {
-    const TOTAL_PAGES = Math.ceil(history.length / ITEMS_PER_PAGE) || 1;
+  function renderGrid(list, titleText, type, page = 1) {
+    const TOTAL_PAGES = Math.ceil(list.length / ITEMS_PER_PAGE) || 1;
     if (page < 1) page = 1;
     if (page > TOTAL_PAGES) page = TOTAL_PAGES;
 
     const start = (page - 1) * ITEMS_PER_PAGE;
     const end = page * ITEMS_PER_PAGE;
-    const historySlice = history.slice(start, end);
+    const listSlice = list.slice(start, end);
 
-    const newHistorySection = createHistoryElement(historySlice);
+    const newSection = createListElement(listSlice, titleText, type);
 
-    const navigation = createNavigation(TOTAL_PAGES, page, (newPage) => {
-      renderHistory(history, newPage);
+    const navigation = createNavigation(TOTAL_PAGES, page, type, (newPage) => {
+      const url = new URL(window.location);
+      url.searchParams.set(`${type}-page`, newPage);
+      window.history.pushState({ page: newPage }, "", url.toString());
+      renderGrid(list, titleText, type, newPage);
     });
 
-    if (!newHistorySection.classList.contains("empty")) {
-      newHistorySection.appendChild(navigation);
+    if (!newSection.classList.contains("empty")) {
+      newSection.appendChild(navigation);
     }
 
-    const existingHistorySection = document.querySelector(".history-section");
-    if (existingHistorySection) {
-      existingHistorySection.replaceWith(newHistorySection);
+    const existingSection = document.getElementById(`animepahe-${type}`);
+    if (existingSection) {
+      existingSection.replaceWith(newSection);
     } else {
       const contentWrapper = document.evaluate(
         "/html/body/section/article/div",
@@ -57,15 +65,12 @@
         null,
       ).singleNodeValue;
       if (contentWrapper) {
-        contentWrapper.insertBefore(
-          newHistorySection,
-          contentWrapper.firstChild,
-        );
+        contentWrapper.insertBefore(newSection, contentWrapper.firstChild);
       }
     }
   }
 
-  function createNavigation(TOTAL_PAGES, currentPage, onPageClick) {
+  function createNavigation(TOTAL_PAGES, currentPage, type, onPageClick) {
     const navigation = document.createElement("nav");
     navigation.ariaLabel = "History Navigation";
 
@@ -78,7 +83,7 @@
 
       const link = document.createElement("a");
       link.className = "page-link";
-      link.setAttribute("data-history-page", page);
+      link.setAttribute(`data-${type}-page`, `${page}`);
       link.title = srLabel || `Go to page ${page}`;
 
       const srSpan = document.createElement("span");
@@ -94,11 +99,6 @@
       if (!disabled) {
         li.addEventListener("click", (e) => {
           e.preventDefault();
-
-          const url = new URL(window.location);
-          url.searchParams.set("history-page", page);
-          window.history.pushState({ page }, "", url.toString());
-
           onPageClick(page);
         });
       }
@@ -138,46 +138,50 @@
     return navigation;
   }
 
-  function createHistoryElement(historySlice) {
-    if (historySlice.length === 0) {
+  function createListElement(listSlice, titleText, type) {
+    if (listSlice.length === 0) {
       const empty = document.createElement("div");
-      empty.className = "history-section empty";
+      empty.id = `animepahe-${type}`;
+      empty.className = "animepahe-section empty";
       return empty;
     }
 
-    const historyDiv = document.createElement("div");
-    historyDiv.className = "history-section";
+    const listDiv = document.createElement("div");
+    listDiv.id = `animepahe-${type}`;
+    listDiv.className = "animepahe-section";
 
     const title = document.createElement("h2");
-    title.textContent = "Recently Watched";
+    title.textContent = titleText;
 
-    const clearButton = document.createElement("button");
-    clearButton.className = "clear-history-btn";
-    clearButton.textContent = "Clear History";
-    clearButton.addEventListener("click", (e) => {
-      e.preventDefault();
-      if (confirm("Are you sure you want to clear your watch history?")) {
-        window.AnimePaheHelperStorage.clearHistory();
-        console.log(getHistory());
-        renderHistory([]);
-      }
-    });
-    title.appendChild(clearButton);
+    if (type === "history") {
+      const clearButton = document.createElement("button");
+      clearButton.className = "clear-history-btn";
+      clearButton.textContent = "Clear History";
+      clearButton.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (confirm("Are you sure you want to clear your watch history?")) {
+          window.AnimePaheHelperStorage.clearHistory();
+          console.log(getHistory());
+          renderGrid([], titleText, type);
+        }
+      });
+      title.appendChild(clearButton);
+    }
 
-    const historyListWrapper = document.createElement("div");
-    historyListWrapper.className = "history-list-wrapper";
+    const listWrapper = document.createElement("div");
+    listWrapper.className = "animepahe-list-wrapper";
 
-    const historyList = document.createElement("div");
-    historyList.className = "history-list row";
+    const list = document.createElement("div");
+    list.className = "animepahe-list row";
 
-    historySlice.forEach((entry) => {
+    listSlice.forEach((entry) => {
       if (!entry.anime) return;
-      const historyAnimeWrap = document.createElement("div");
-      historyAnimeWrap.className = "history-anime-wrap col-12 col-sm-4";
-      historyAnimeWrap.setAttribute("data-id", entry.anime.id);
+      const animeWrap = document.createElement("div");
+      animeWrap.className = "animepahe-anime-wrap col-12 col-sm-4";
+      animeWrap.setAttribute("data-id", entry.anime.id);
 
-      const historyAnime = document.createElement("div");
-      historyAnime.className = "history-anime";
+      const anime = document.createElement("div");
+      anime.className = "animepahe-anime";
 
       const animeSnapshot = document.createElement("div");
       animeSnapshot.className = "anime-snapshot";
@@ -187,23 +191,26 @@
       cover.src = entry.anime.cover;
       cover.setAttribute("data-src", entry.anime.cover);
       cover.alt = entry.anime.title;
+      animeSnapshot.appendChild(cover);
 
-      const playButton = document.createElement("svg");
-      playButton.className = "play-button";
-      playButton.viewBox = "0 0 150 150";
-      playButton.setAttribute("alt", "Play Video");
-
-      const playIcon = document.createElement("polygon");
-      playIcon.setAttribute("points", "20, 20, 20, 140, 120, 80");
-      playIcon.setAttribute("fill", "#fff");
-      playButton.appendChild(playIcon);
+      if (type === "history") {
+        const playButton = document.createElement("svg");
+        playButton.className = "play-button";
+        playButton.viewBox = "0 0 150 150";
+        playButton.setAttribute("alt", "Play Video");
+        const playIcon = document.createElement("polygon");
+        playIcon.setAttribute("points", "20, 20, 20, 140, 120, 80");
+        playIcon.setAttribute("fill", "#fff");
+        playButton.appendChild(playIcon);
+        animeSnapshot.appendChild(playButton);
+      }
 
       const playLink = document.createElement("a");
       playLink.className = "play";
-      playLink.href = `/play/${entry.anime.id}/${entry.video_id}`;
-
-      animeSnapshot.appendChild(cover);
-      animeSnapshot.appendChild(playButton);
+      playLink.href =
+        type === "history"
+          ? `/play/${entry.anime.id}/${entry.video_id}`
+          : `/anime/${entry.anime.id}`;
       animeSnapshot.appendChild(playLink);
 
       const animeLabelWrap = document.createElement("div");
@@ -214,13 +221,19 @@
 
       const animeDelete = document.createElement("button");
       animeDelete.className = "anime-delete-btn";
-      animeDelete.title = "Remove from History";
+      animeDelete.title = `Remove ${entry.anime.title} from ${type}`;
       animeDelete.innerHTML = "&times;";
       animeDelete.addEventListener("click", (e) => {
         e.preventDefault();
-        removeFromHistory(entry.anime.id);
-        historyAnimeWrap.remove();
-        renderHistory(getHistory());
+        type === "history"
+          ? removeFromHistory(entry.anime.id)
+          : toggleWatchlist(entry.anime.id);
+        animeWrap.remove();
+        renderGrid(
+          type === "history" ? getHistory() : getWatchlist(),
+          titleText,
+          type,
+        );
       });
       animeDeleteWrap.appendChild(animeDelete);
       animeLabelWrap.appendChild(animeDeleteWrap);
@@ -242,73 +255,78 @@
       animeName.appendChild(animeLink);
       animeNameWrap.appendChild(animeName);
 
-      const animeNumberWrap = document.createElement("div");
-      animeNumberWrap.className = "anime-number-wrap";
-
-      const animeNumber = document.createElement("div");
-      animeNumber.className = "anime-number";
-
-      const spanEpisode = document.createElement("span");
-      spanEpisode.className = "text-hide";
-      spanEpisode.textContent = `${entry.anime.title} Episode`;
-
-      animeNumber.textContent = `${entry.episode}`;
-      animeNumber.prepend(spanEpisode);
-      animeNumberWrap.appendChild(animeNumber);
-
       animeLabel.appendChild(animeNameWrap);
-      animeLabel.appendChild(animeNumberWrap);
+
+      if (type === "history") {
+        const animeNumberWrap = document.createElement("div");
+        animeNumberWrap.className = "anime-number-wrap";
+
+        const animeNumber = document.createElement("div");
+        animeNumber.className = "anime-number";
+
+        const spanEpisode = document.createElement("span");
+        spanEpisode.className = "text-hide";
+        spanEpisode.textContent = `${entry.anime.title} Episode`;
+
+        animeNumber.textContent = `${entry.episode}`;
+        animeNumber.prepend(spanEpisode);
+        animeNumberWrap.appendChild(animeNumber);
+
+        animeLabel.appendChild(animeNumberWrap);
+      }
+
       animeLabelWrap.appendChild(animeLabel);
-
-      historyAnime.appendChild(animeSnapshot);
-      historyAnime.appendChild(animeLabelWrap);
-
-      historyAnimeWrap.appendChild(historyAnime);
-      historyList.appendChild(historyAnimeWrap);
+      anime.appendChild(animeSnapshot);
+      anime.appendChild(animeLabelWrap);
+      animeWrap.appendChild(anime);
+      list.appendChild(animeWrap);
     });
 
-    historyListWrapper.appendChild(historyList);
-    historyDiv.appendChild(title);
-    historyDiv.appendChild(historyListWrapper);
+    listWrapper.appendChild(list);
+    listDiv.appendChild(title);
+    listDiv.appendChild(listWrapper);
 
-    return historyDiv;
+    return listDiv;
   }
 
-  function createAddToListButton(anime) {
-    const navUl = document.evaluate(
-      "/html/body/section/article/div[2]/div[1]/nav/ul",
+  function createWatchlistButton(anime) {
+    const header = document.evaluate(
+      "/html/body/section/article/div[1]/header/div",
       document,
       null,
       XPathResult.FIRST_ORDERED_NODE_TYPE,
       null,
     ).singleNodeValue;
 
-    if (!navUl) return;
+    if (!header) return;
 
-    const listButtonLi =
-      document.getElementById("add-to-list") || document.createElement("li");
-    listButtonLi.id = "add-to-list";
-    listButtonLi.className = "col";
-    listButtonLi.innerHTML = "";
-
-    const listButtonLink = document.createElement("a");
-    listButtonLink.setAttribute("data-tab", "add-to-list");
-    listButtonLink.title = "Add to List";
-    listButtonLink.textContent = "Add to List";
-    listButtonLink.addEventListener("click", (e) => {
+    const listButtonWrap =
+      document.querySelector(".watchlist-toggle") ||
+      document.createElement("h3");
+    listButtonWrap.className = "watchlist-toggle";
+    const listButton =
+      listButtonWrap.querySelector(".watchlist-button") ||
+      document.createElement("button");
+    listButton.className = "watchlist-button";
+    listButton.textContent = `${isInWatchlist(anime.id) ? "Remove from" : "Add to"} Watchlist`;
+    listButton.title = listButton.textContent;
+    listButton.addEventListener("click", (e) => {
       e.preventDefault();
+      toggleWatchlist(anime.id, anime.title, anime.cover);
+      listButton.textContent = `${isInWatchlist(anime.id) ? "Remove from" : "Add to"} Watchlist`;
+      listButton.title = listButton.textContent;
     });
 
-    listButtonLi.appendChild(listButtonLink);
-
-    navUl.appendChild(listButtonLi);
+    listButtonWrap.appendChild(listButton);
+    header.appendChild(listButtonWrap);
   }
 
   window.AnimePaheHelperUtils = {
     parsePlayPath,
     parseAnimePath,
-    renderHistory,
-    createAddToListButton,
+    createListElement,
+    renderGrid,
+    createWatchlistButton,
   };
 
   console.log(

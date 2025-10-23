@@ -33,14 +33,14 @@
    * @property {number} version
    * @property {{[anime_id: string]: Anime}} animes
    * @property {Array<HistoryEntry>} history
-   * @property {Array<AnimeList>} lists
+   * @property {Array<string>} watchlist
    */
 
   const defaultData = {
     version: CURRENT_VERSION,
     animes: {},
     history: [],
-    lists: [],
+    watchlist: [],
   };
 
   /**
@@ -63,7 +63,7 @@
 
       if (!data.animes) data.animes = {};
       if (!data.history) data.history = [];
-      if (!data.lists) data.lists = [];
+      if (!data.watchlist) data.watchlist = [];
 
       return data;
     } catch (err) {
@@ -132,68 +132,31 @@
     saveData(data);
   }
 
-  function getLists() {
+  function getWatchlist() {
     const data = loadData();
-    return data.lists;
+    return data.watchlist.map((anime_id) => ({
+      anime: data.animes[anime_id],
+    }));
   }
 
   /**
-   * @param {string} name
+   * @param {string} anime_id
    */
-  function getList(name) {
+  function toggleWatchlist(anime_id) {
     const data = loadData();
-    return data.lists.find((list) => list.name === name) || null;
-  }
-
-  /**
-   * @param {string} name
-   */
-  function createList(name) {
-    const data = loadData();
-    if (!data.lists.find((list) => list.name === name)) {
-      data.lists.push({
-        name,
-        anime_ids: [],
-      });
-      saveData(data);
-    }
-  }
-
-  /**
-   * @param {string} name
-   */
-  function deleteList(name) {
-    const data = loadData();
-    data.lists = data.lists.filter((list) => list.name !== name);
+    const index = data.watchlist.indexOf(anime_id);
+    if (index === -1) data.watchlist.push(anime_id);
+    else data.watchlist.splice(index, 1);
     cleanUnusedAnimes(data);
     saveData(data);
   }
 
   /**
-   * @param {string} listName
    * @param {string} anime_id
    */
-  function addToList(listName, anime_id) {
+  function isInWatchlist(anime_id) {
     const data = loadData();
-    const list = data.lists.find((l) => l.name === listName);
-    if (list && !list.anime_ids.includes(anime_id)) {
-      list.anime_ids.push(anime_id);
-      saveData(data);
-    }
-  }
-
-  /**
-   * @param {string} listName
-   * @param {string} anime_id
-   */
-  function removeFromList(listName, anime_id) {
-    const data = loadData();
-    const list = data.lists.find((l) => l.name === listName);
-    if (list) {
-      list.anime_ids = list.anime_ids.filter((id) => id !== anime_id);
-    }
-    cleanUnusedAnimes(data);
-    saveData(data);
+    return data.watchlist.includes(anime_id);
   }
 
   function getAnimes() {
@@ -242,7 +205,7 @@
   function cleanUnusedAnimes(data) {
     const usedIds = new Set([
       ...data.history.map((entry) => entry.anime_id),
-      ...data.lists.flatMap((list) => list.anime_ids),
+      ...data.watchlist,
     ]);
 
     for (const anime_id in data.animes) {
@@ -259,12 +222,9 @@
     updateHistory,
     removeFromHistory,
     clearHistory,
-    getLists,
-    getList,
-    createList,
-    deleteList,
-    addToList,
-    removeFromList,
+    getWatchlist,
+    toggleWatchlist,
+    isInWatchlist,
     getAnimes,
     getAnime,
     registerAnime,

@@ -5,7 +5,7 @@
   );
 
   const STORAGE_KEY = "animepahe_helper_data";
-  const CURRENT_VERSION = 1;
+  const CURRENT_VERSION = 2;
 
   /**
    * @typedef {Object} Anime
@@ -17,7 +17,12 @@
   /**
    * @typedef {Object} HistoryEntry
    * @property {string} anime_id
-   * @property {string} episode
+   * @property {Array<HistoryEpisode>} episodes
+   */
+
+  /**
+   * @typedef {Object} HistoryEpisode
+   * @property {string} episode_number
    * @property {string} video_id
    * @property {number} watched_at
    */
@@ -51,8 +56,14 @@
       const data = JSON.parse(rawData);
 
       if (!data.version || data.version < CURRENT_VERSION) {
-        // Handle migrations here if needed in the future
+        console.log("%c[AnimePahe Helper] Migrating data...", "color:#D5015B");
+        if (data.version === 1) migrateV1toV2(data);
         data.version = CURRENT_VERSION;
+        console.log(
+          "%c[AnimePahe Helper] Migration complete.",
+          "color:#D5015B",
+        );
+        saveData(data);
       }
 
       if (!data.animes) data.animes = {};
@@ -65,6 +76,31 @@
       saveData(defaultData);
       return structuredClone(defaultData);
     }
+  }
+
+  /**
+   * @param {Data} data
+   */
+  function migrateV1toV2(data) {
+    data.history = data.history.map((entry) => {
+      if (entry.episode && entry.video_id && entry.watched_at) {
+        return {
+          anime_id: entry.anime_id,
+          episodes: [
+            {
+              episode_number: entry.episode,
+              video_id: entry.video_id,
+              watched_at: entry.watched_at,
+            },
+          ],
+        };
+      } else {
+        return {
+          anime_id: entry.anime_id,
+          episodes: [],
+        };
+      }
+    });
   }
 
   /**
@@ -92,29 +128,72 @@
     const now = Date.now();
     const existing = data.history.find((entry) => entry.anime_id === anime_id);
 
+    const episodeData = {
+      episode_number: episode,
+      video_id,
+      watched_at: now,
+    };
+
     if (existing) {
-      existing.episode = episode;
-      existing.video_id = video_id;
-      existing.watched_at = now;
+      const epIndex = existing.episodes.findIndex(
+        (ep) => ep.episode_number === episode,
+      );
+      if (epIndex !== -1) existing.episodes[epIndex] = episodeData;
+      else existing.episodes.push(episodeData);
     } else {
       data.history.push({
         anime_id,
-        episode,
-        video_id,
-        watched_at: now,
+        episodes: [episodeData],
       });
     }
 
-    data.history.sort((a, b) => b.watched_at - a.watched_at);
+    data.history.sort((a, b) => {
+      const aLast = a.episodes.reduce(
+        (max, ep) => (ep.watched_at > max ? ep.watched_at : max),
+        0,
+      );
+      const bLast = b.episodes.reduce(
+        (max, ep) => (ep.watched_at > max ? ep.watched_at : max),
+        0,
+      );
+      return bLast - aLast;
+    });
     saveData(data);
   }
 
   /**
    * @param {string} anime_id
    */
-  function removeFromHistory(anime_id) {
+  function getLastWatchedEpisode(anime_id) {
     const data = loadData();
-    data.history = data.history.filter((entry) => entry.anime_id !== anime_id);
+    const historyEntry = data.history.find(
+      (entry) => entry.anime_id === anime_id,
+    );
+    if (!historyEntry || historyEntry.episodes.length === 0) return null;
+    return historyEntry.episodes.reduce(
+      (latest, ep) =>
+        !latest || ep.watched_at > latest.watched_at ? ep : latest,
+      null,
+    );
+  }
+
+  /**
+   * @param {string} anime_id
+   * @param {string | null} episode_number
+   */
+  function removeFromHistory(anime_id, episode_number = null) {
+    const data = loadData();
+    data.history = data.history
+      .map((entry) => {
+        if (entry.anime_id !== anime_id) return entry;
+        if (!episode_number) return null;
+        const episodes = entry.episodes.filter(
+          (ep) => ep.episode_number !== episode_number,
+        );
+        return episodes.length ? { ...entry, episodes } : null;
+      })
+      .filter((entry) => entry !== null);
+
     cleanUnusedAnimes(data);
     saveData(data);
   }
@@ -214,6 +293,7 @@
     saveData,
     getHistory,
     updateHistory,
+    getLastWatchedEpisode,
     removeFromHistory,
     clearHistory,
     getWatchlist,

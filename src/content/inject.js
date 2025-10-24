@@ -1,12 +1,16 @@
 (() => {
   const { getHistory, updateHistory, getWatchlist, getAnime, registerAnime } =
     window.AnimePaheHelperStorage;
-  const { parsePlayPath, parseAnimePath, renderGrid, createWatchlistButton } =
-    window.AnimePaheHelperUtils;
+  const {
+    parsePlayPath,
+    parseAnimePath,
+    renderGrid,
+    createWatchlistButton,
+    createWatchedMask,
+  } = window.AnimePaheHelperUtils;
 
   function homeHandler() {
     const watchlist = getWatchlist();
-    console.log(watchlist);
     const history = getHistory();
 
     const searchParams = new URLSearchParams(window.location.search);
@@ -18,7 +22,7 @@
     renderGrid(history, "Recently Watched", "history", currentHistoryPage);
 
     console.log(
-      "%c[AnimePaheHelper] Injected history section on homepage.",
+      "%c[AnimePaheHelper] Injected home page grids.",
       "color:#D5015B",
     );
   }
@@ -50,6 +54,11 @@
       anime = registerAnime(info.anime_id, title, cover);
     }
     createWatchlistButton(anime);
+
+    setTimeout(() => {
+      const episodeList = document.querySelector(".episode-list");
+      if (episodeList) createWatchedMask(episodeList, info.anime_id);
+    }, 1000);
   }
 
   function playHandler() {

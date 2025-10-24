@@ -6,6 +6,7 @@
 
   const {
     getHistory,
+    getLastWatchedEpisode,
     removeFromHistory,
     getWatchlist,
     toggleWatchlist,
@@ -40,7 +41,7 @@
     const end = page * ITEMS_PER_PAGE;
     const listSlice = list.slice(start, end);
 
-    const newSection = createListElement(listSlice, titleText, type);
+    const newSection = createListElement(listSlice, titleText, type, page);
 
     const navigation = createNavigation(TOTAL_PAGES, page, type, (newPage) => {
       const url = new URL(window.location);
@@ -138,7 +139,7 @@
     return navigation;
   }
 
-  function createListElement(listSlice, titleText, type) {
+  function createListElement(listSlice, titleText, type, page) {
     if (listSlice.length === 0) {
       const empty = document.createElement("div");
       empty.id = `animepahe-${type}`;
@@ -161,7 +162,6 @@
         e.preventDefault();
         if (confirm("Are you sure you want to clear your watch history?")) {
           window.AnimePaheHelperStorage.clearHistory();
-          console.log(getHistory());
           renderGrid([], titleText, type);
         }
       });
@@ -207,9 +207,11 @@
 
       const playLink = document.createElement("a");
       playLink.className = "play";
+      const lastEpisode =
+        type === "history" ? getLastWatchedEpisode(entry.anime.id) : null;
       playLink.href =
         type === "history"
-          ? `/play/${entry.anime.id}/${entry.video_id}`
+          ? `/play/${entry.anime.id}/${lastEpisode.video_id}`
           : `/anime/${entry.anime.id}`;
       animeSnapshot.appendChild(playLink);
 
@@ -226,13 +228,14 @@
       animeDelete.addEventListener("click", (e) => {
         e.preventDefault();
         type === "history"
-          ? removeFromHistory(entry.anime.id)
+          ? removeFromHistory(entry.anime.id, lastEpisode.episode_number)
           : toggleWatchlist(entry.anime.id);
         animeWrap.remove();
         renderGrid(
           type === "history" ? getHistory() : getWatchlist(),
           titleText,
           type,
+          page,
         );
       });
       animeDeleteWrap.appendChild(animeDelete);
@@ -268,7 +271,7 @@
         spanEpisode.className = "text-hide";
         spanEpisode.textContent = `${entry.anime.title} Episode`;
 
-        animeNumber.textContent = `${entry.episode}`;
+        animeNumber.textContent = `${lastEpisode.episode_number}`;
         animeNumber.prepend(spanEpisode);
         animeNumberWrap.appendChild(animeNumber);
 
@@ -321,12 +324,63 @@
     header.appendChild(listButtonWrap);
   }
 
+  function createWatchedMask(episodeList, anime_id) {
+    const history = getHistory();
+    const watchedEpisodes = new Map();
+    history.forEach((entry) => {
+      if (entry.anime && entry.anime.id === anime_id)
+        entry.episodes.forEach((ep) =>
+          watchedEpisodes.set(ep.episode_number, true),
+        );
+    });
+
+    const episodes = episodeList.querySelectorAll(".episode");
+    episodes.forEach((episode) => {
+      const episodeNumberElement = episode.querySelector(
+        ".episode-label .episode-number",
+      );
+      if (!episodeNumberElement) return;
+      const numberRegex = /Episode\s+(\d+)/i;
+      const match = episodeNumberElement.textContent.trim().match(numberRegex);
+      if (!match) return;
+      if (watchedEpisodes.has(match[1])) {
+        const labelWrap = episode.querySelector(".episode-label-wrap");
+        if (labelWrap) {
+          if (!labelWrap.classList.contains("watched"))
+            labelWrap.classList.add("watched");
+
+          const animeWatchWrap =
+            labelWrap.querySelector(".anime-watched-wrap") ||
+            document.createElement("div");
+          animeWatchWrap.className = "anime-watched-wrap";
+
+          const watchedBtn =
+            animeWatchWrap.querySelector(".anime-watched-btn") ||
+            document.createElement("button");
+          watchedBtn.className = "anime-watched-btn";
+          watchedBtn.title = "Mark as Unwatched";
+          watchedBtn.innerHTML = "&times;";
+          watchedBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            removeFromHistory(anime_id, match[1]);
+            labelWrap.classList.remove("watched");
+            animeWatchWrap.remove();
+          });
+
+          animeWatchWrap.appendChild(watchedBtn);
+          labelWrap.prepend(animeWatchWrap);
+        }
+      }
+    });
+  }
+
   window.AnimePaheHelperUtils = {
     parsePlayPath,
     parseAnimePath,
     createListElement,
     renderGrid,
     createWatchlistButton,
+    createWatchedMask,
   };
 
   console.log(

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AnimePahe Helper",
-  "version": "1.3",
+  "version": "1.4",
   "description": "Enhances the AnimePahe website with additional features.",
   "icons": {
     "48": "icons/animepahe-helper-48.png"

@@ -23,12 +23,6 @@
    */
 
   /**
-   * @typedef {Object} AnimeList
-   * @property {string} name
-   * @property {Array<string>} anime_ids
-   */
-
-  /**
    * @typedef {Object} Data
    * @property {number} version
    * @property {{[anime_id: string]: Anime}} animes

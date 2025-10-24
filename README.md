@@ -9,6 +9,9 @@ Enhances the [AnimePahe](https://animepahe.si) website with a set of useful feat
 - 🕒 **Watch History**
   Automatically keeps track of the episodes you watch — resume any anime later with one click.
 
+- 📋 **Watchlist Management**
+  Easily add or remove anime from your personal watchlist directly on the site.
+
 - 🧠 **Clean UI Integration**
   Seamlessly fits into AnimePahe’s existing design — no intrusive popups or layout breaks.
 
@@ -16,6 +19,7 @@ Enhances the [AnimePahe](https://animepahe.si) website with a set of useful feat
 
 ## 🧩 Planned Features
 
+- ⏩ **Intro & Outro Skipping** — Button to skip intros and outros based on [Ellivers/open-anime-timestamps](https://github.com/Ellivers/open-anime-timestamps)
 - ☁️ **Online Sync** — Save your watch history to the cloud and access it across devices.
 - 💾 **Cross-browser Support** — Chromium-based browsers (Chrome, Edge, Brave, etc.).
 
@@ -23,7 +27,14 @@ Enhances the [AnimePahe](https://animepahe.si) website with a set of useful feat
 
 ## 🚀 Installation
 
-### 🦊 Firefox (Temporary Installation)
+### 🦊 Firefox
+
+1. Go to the [AnimePahe Helper Firefox Add-on page](https://addons.mozilla.org/en-US/firefox/addon/animepahe-helper/).
+2. Click on **"Add to Firefox"**.
+3. Confirm any prompts to complete the installation.
+4. Once installed, navigate to [AnimePahe](https://animepahe.si) and enjoy the features!
+
+### 🛠 Manual Installation (Development Version)
 1. Clone or download this repository:
     ```bash
     git clone https://github.com/ValDesign22/animepahe-helper.git

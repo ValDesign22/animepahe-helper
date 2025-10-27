@@ -354,6 +354,13 @@
             document.createElement("div");
           animeWatchWrap.className = "anime-watched-wrap";
 
+          const watchedText =
+            animeWatchWrap.querySelector(".anime-watched-text") ||
+            document.createElement("span");
+          watchedText.className = "anime-watched-text";
+          watchedText.textContent = "Watched";
+          animeWatchWrap.appendChild(watchedText);
+
           const watchedBtn =
             animeWatchWrap.querySelector(".anime-watched-btn") ||
             document.createElement("button");

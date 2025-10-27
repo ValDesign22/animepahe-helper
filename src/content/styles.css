@@ -183,7 +183,7 @@
 
                 &:hover {
                   opacity: 1;
-                  background: rgba(0, 0, 0, 0.8);
+                  background: rgba(0, 0, 0, 0.65);
                   color: #d5015b;
                 }
               }
@@ -271,6 +271,11 @@
   margin: 0;
   font-size: 1rem;
   font-weight: 500;
+
+  @media (max-width: 767px) {
+    padding: 8px 0 8px 0;
+    text-align: center;
+  }
 }
 
 .watchlist-button {
@@ -306,7 +311,7 @@ section.main
   transition: background-color 0.2s ease;
 
   &.watched {
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: rgba(0, 0, 0, 0.5);
   }
 
   > :last-child {
@@ -315,28 +320,33 @@ section.main
 
   .anime-watched-wrap {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
     padding: 5px 10px;
     pointer-events: auto;
+
+    .anime-watched-text {
+      font-size: 0.75rem;
+      background: rgba(0, 0, 0, 0.65);
+      padding: 2px 4px 1px;
+      border-radius: 3px;
+    }
 
     .anime-watched-btn {
       width: 20px;
       height: 20px;
       padding: 0;
       cursor: pointer;
-      opacity: 0.7;
       color: #fff;
       font-size: 18px;
       line-height: 20px;
       text-align: center;
-      transition: opacity 0.2s ease;
+      transition: all 0.2s ease;
       border: none;
       border-radius: 3px;
-      background: rgba(0, 0, 0, 0.5);
+      background: rgba(0, 0, 0, 0.4);
 
       &:hover {
-        opacity: 1;
-        background: rgba(0, 0, 0, 0.8);
+        background: rgba(0, 0, 0, 0.65);
         color: #d5015b;
       }
     }

@@ -106,7 +106,72 @@
     }
   }
 
+  function navBar() {
+    const navbar = document.getElementById("navbarNavDropdown");
+    if (!navbar) return;
+
+    // TODO: function to import/export watchlist and history
+    const userDropdown =
+      navbar.querySelector("#animePaheHelperDropdown") ||
+      document.createElement("div");
+    userDropdown.id = "animePaheHelperDropdown";
+    userDropdown.className = "dropdown";
+
+    const profileBtn =
+      userDropdown.querySelector("button") || document.createElement("button");
+    profileBtn.className = "btn btn-secondary dropdown-toggle";
+    profileBtn.type = "button";
+    profileBtn.id = "userDropdownMenuButton";
+    profileBtn.setAttribute("data-toggle", "dropdown");
+    profileBtn.setAttribute("aria-has-popup", "true");
+    profileBtn.setAttribute("aria-expanded", "false");
+    profileBtn.textContent = "AnimePaheHelper";
+    userDropdown.appendChild(profileBtn);
+
+    const dropdownMenu =
+      userDropdown.querySelector(".dropdown-menu") ||
+      document.createElement("div");
+    dropdownMenu.className = "dropdown-menu dropdown-menu-right";
+    dropdownMenu.setAttribute("aria-labelledby", "userDropdownMenuButton");
+
+    const importItem =
+      dropdownMenu.querySelector("#importData") || document.createElement("a");
+    importItem.className = "dropdown-item";
+    importItem.id = "importData";
+    importItem.href = "#";
+    importItem.textContent = "Import Data";
+    importItem.addEventListener("click", () => {
+      const data = prompt("Paste your exported data here:");
+      if (data) {
+        try {
+          window.AnimePaheHelperStorage.importData(data);
+          alert("Data imported successfully!");
+        } catch (e) {
+          alert("Failed to import data. Please check the format.");
+        }
+      }
+    });
+    dropdownMenu.appendChild(importItem);
+
+    const exportItem =
+      dropdownMenu.querySelector("#exportData") || document.createElement("a");
+    exportItem.className = "dropdown-item";
+    exportItem.id = "exportData";
+    exportItem.href = "#";
+    exportItem.textContent = "Export Data";
+    exportItem.addEventListener("click", () => {
+      const data = window.AnimePaheHelperStorage.exportData();
+      prompt("Copy your exported data:", data);
+    });
+    dropdownMenu.appendChild(exportItem);
+
+    userDropdown.appendChild(dropdownMenu);
+
+    navbar.appendChild(userDropdown);
+  }
+
   function handle() {
+    navBar();
     const path = window.location.pathname;
     if (path === "/") return homeHandler();
     if (path.startsWith("/anime/")) return animeHandler();

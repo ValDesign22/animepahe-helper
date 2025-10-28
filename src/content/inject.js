@@ -144,10 +144,10 @@
     const importItem =
       dropdownMenu.querySelector("#importData") ||
       document.createElement("input");
-    importItem.className = "dropdown-item";
     importItem.id = "importData";
     importItem.setAttribute("type", "file");
     importItem.setAttribute("accept", "application/json");
+    importItem.style.display = "none";
     importItem.textContent = "Import Data";
     importItem.addEventListener("change", (event) => {
       const file = event.target.files[0];
@@ -161,6 +161,7 @@
           }
           saveData(importedData);
           alert("Data imported successfully!");
+          window.location.reload();
         } catch (err) {
           alert("Failed to import data: " + err.message);
         } finally {
@@ -171,11 +172,23 @@
     });
     dropdownMenu.appendChild(importItem);
 
+    const importButton =
+      document.querySelector("#importDataButton") ||
+      document.createElement("button");
+    importButton.className = "dropdown-item";
+    importButton.id = "importDataButton";
+    importButton.textContent = "Import Data";
+    importButton.addEventListener("click", () => {
+      const importItem = document.getElementById("importData");
+      if (importItem) importItem.click();
+    });
+    dropdownMenu.appendChild(importButton);
+
     const exportItem =
-      dropdownMenu.querySelector("#exportData") || document.createElement("a");
+      dropdownMenu.querySelector("#exportData") ||
+      document.createElement("button");
     exportItem.className = "dropdown-item";
     exportItem.id = "exportData";
-    exportItem.href = "#";
     exportItem.textContent = "Export Data";
     exportItem.addEventListener("click", () => {
       const data = loadData();
@@ -183,13 +196,13 @@
         type: "application/json",
       });
       const url = URL.createObjectURL(dataBlob);
-      browser.downloads
-        .download({
-          url,
-          filename: "animepahehelper_data.json",
-          saveAs: true,
-        })
-        .then(() => URL.revokeObjectURL(url));
+      const dlElement = document.createElement("a");
+      dlElement.href = url;
+      dlElement.download = "animepahe_helper_data.json";
+      document.body.appendChild(dlElement);
+      dlElement.click();
+      document.body.removeChild(dlElement);
+      URL.revokeObjectURL(url);
     });
     dropdownMenu.appendChild(exportItem);
 

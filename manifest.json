@@ -6,7 +6,7 @@
   "icons": {
     "48": "icons/animepahe-helper-48.png"
   },
-  "permissions": ["storage", "scripting", "activeTab"],
+  "permissions": ["storage", "scripting", "activeTab", "downloads"],
   "host_permissions": ["*://animepahe.si/*", "*://*.animepahe.si/*"],
   "content_scripts": [
     {

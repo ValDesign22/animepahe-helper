@@ -1,6 +1,14 @@
 (() => {
-  const { getHistory, updateHistory, getWatchlist, getAnime, registerAnime } =
-    window.AnimePaheHelperStorage;
+  const {
+    loadData,
+    saveData,
+    validateData,
+    getHistory,
+    updateHistory,
+    getWatchlist,
+    getAnime,
+    registerAnime,
+  } = window.AnimePaheHelperStorage;
   const {
     parsePlayPath,
     parseAnimePath,
@@ -110,7 +118,6 @@
     const navbar = document.getElementById("navbarNavDropdown");
     if (!navbar) return;
 
-    // TODO: function to import/export watchlist and history
     const userDropdown =
       navbar.querySelector("#animePaheHelperDropdown") ||
       document.createElement("div");
@@ -135,21 +142,32 @@
     dropdownMenu.setAttribute("aria-labelledby", "userDropdownMenuButton");
 
     const importItem =
-      dropdownMenu.querySelector("#importData") || document.createElement("a");
+      dropdownMenu.querySelector("#importData") ||
+      document.createElement("input");
     importItem.className = "dropdown-item";
     importItem.id = "importData";
-    importItem.href = "#";
+    importItem.setAttribute("type", "file");
+    importItem.setAttribute("accept", "application/json");
     importItem.textContent = "Import Data";
-    importItem.addEventListener("click", () => {
-      const data = prompt("Paste your exported data here:");
-      if (data) {
+    importItem.addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
         try {
-          window.AnimePaheHelperStorage.importData(data);
+          const importedData = JSON.parse(e.target.result);
+          if (!validateData(importedData)) {
+            throw new Error("Invalid data format.");
+          }
+          saveData(importedData);
           alert("Data imported successfully!");
-        } catch (e) {
-          alert("Failed to import data. Please check the format.");
+        } catch (err) {
+          alert("Failed to import data: " + err.message);
+        } finally {
+          importItem.value = "";
         }
-      }
+      };
+      reader.readAsText(file);
     });
     dropdownMenu.appendChild(importItem);
 
@@ -160,8 +178,18 @@
     exportItem.href = "#";
     exportItem.textContent = "Export Data";
     exportItem.addEventListener("click", () => {
-      const data = window.AnimePaheHelperStorage.exportData();
-      prompt("Copy your exported data:", data);
+      const data = loadData();
+      const dataBlob = new Blob([JSON.stringify(data, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(dataBlob);
+      browser.downloads
+        .download({
+          url,
+          filename: "animepahehelper_data.json",
+          saveAs: true,
+        })
+        .then(() => URL.revokeObjectURL(url));
     });
     dropdownMenu.appendChild(exportItem);
 

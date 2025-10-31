@@ -8,6 +8,7 @@
     getWatchlist,
     getAnime,
     registerAnime,
+    invalidateCache,
   } = window.AnimePaheHelperStorage;
   const {
     parsePlayPath,
@@ -41,20 +42,13 @@
 
     let anime = getAnime(info.anime_id);
     if (!anime) {
-      const titleElement = document.evaluate(
-        "/html/body/section/article/div[1]/header/div/h1/span",
-        document,
-        null,
-        XPathResult.FIRST_ORDERED_NODE_TYPE,
-        null,
-      ).singleNodeValue;
-      const coverElement = document.evaluate(
-        "/html/body/section/article/div[1]/header/div/div/div/a/img",
-        document,
-        null,
-        XPathResult.FIRST_ORDERED_NODE_TYPE,
-        null,
-      ).singleNodeValue;
+      // Optimize: Use querySelector instead of XPath
+      const titleElement = document.querySelector(
+        "section article > div header > div h1 span",
+      );
+      const coverElement = document.querySelector(
+        "section article > div header > div > div > div > a > img",
+      );
       const title = titleElement
         ? titleElement.textContent.trim()
         : "Unknown Title";
@@ -63,10 +57,24 @@
     }
     createWatchlistButton(anime);
 
-    setTimeout(() => {
+    // Optimize: Use requestAnimationFrame for better timing
+    // and check if element exists before waiting
+    const checkEpisodeList = () => {
       const episodeList = document.querySelector(".episode-list");
-      if (episodeList) createWatchedMask(episodeList, info.anime_id);
-    }, 1000);
+      if (episodeList) {
+        createWatchedMask(episodeList, info.anime_id);
+      } else {
+        // Retry if not found yet
+        setTimeout(checkEpisodeList, 100);
+      }
+    };
+    
+    // Start checking after a shorter initial delay
+    if (document.readyState === "complete") {
+      checkEpisodeList();
+    } else {
+      window.addEventListener("load", checkEpisodeList);
+    }
   }
 
   function playHandler() {
@@ -74,24 +82,17 @@
     if (info) {
       const { anime_id, video_id } = info;
 
-      const titleElement = document.evaluate(
-        "/html/body/section/article/div/div/div[4]/a",
-        document,
-        null,
-        XPathResult.FIRST_ORDERED_NODE_TYPE,
-        null,
-      ).singleNodeValue;
+      // Optimize: Use querySelector instead of XPath
+      const titleElement = document.querySelector(
+        "section article > div > div > div:nth-child(4) > a",
+      );
       const anime_title = titleElement
         ? titleElement.getAttribute("title")
         : "Unknown Title";
 
-      const coverElement = document.evaluate(
-        "/html/body/section/article/div/div/div[4]/a/img",
-        document,
-        null,
-        XPathResult.FIRST_ORDERED_NODE_TYPE,
-        null,
-      ).singleNodeValue;
+      const coverElement = document.querySelector(
+        "section article > div > div > div:nth-child(4) > a > img",
+      );
       let anime_cover = coverElement ? coverElement.getAttribute("src") : "";
       if (anime_cover.endsWith(".th.jpg")) {
         anime_cover = anime_cover.replace(".th.jpg", ".jpg");
@@ -159,7 +160,8 @@
           if (!validateData(importedData)) {
             throw new Error("Invalid data format.");
           }
-          saveData(importedData);
+          invalidateCache();
+          saveData(importedData, true);
           alert("Data imported successfully!");
           window.location.reload();
         } catch (err) {

@@ -57,14 +57,16 @@
     }
     createWatchlistButton(anime);
 
-    // Optimize: Use requestAnimationFrame for better timing
-    // and check if element exists before waiting
+    // Optimize: Check for episode list with retry logic
+    // Maximum 10 retries (1 second total) to avoid infinite polling
+    let retryCount = 0;
+    const maxRetries = 10;
     const checkEpisodeList = () => {
       const episodeList = document.querySelector(".episode-list");
       if (episodeList) {
         createWatchedMask(episodeList, info.anime_id);
-      } else {
-        // Retry if not found yet
+      } else if (retryCount < maxRetries) {
+        retryCount++;
         setTimeout(checkEpisodeList, 100);
       }
     };

@@ -161,10 +161,9 @@
     dataCache = data;
 
     if (immediate) {
+      // Cancel any pending debounced save
+      saveScheduled = false;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      if (saveScheduled) {
-        saveScheduled = false;
-      }
       return;
     }
 

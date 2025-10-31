@@ -68,7 +68,7 @@
         setTimeout(checkEpisodeList, 100);
       }
     };
-    
+
     // Start checking after a shorter initial delay
     if (document.readyState === "complete") {
       checkEpisodeList();

@@ -159,7 +159,7 @@
    */
   function saveData(data, immediate = false) {
     dataCache = data;
-    
+
     if (immediate) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       if (saveScheduled) {
@@ -170,7 +170,7 @@
 
     // Debounce saves to reduce localStorage writes
     if (saveScheduled) return;
-    
+
     saveScheduled = true;
     setTimeout(() => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -208,7 +208,7 @@
       );
       if (epIndex !== -1) existing.episodes[epIndex] = episodeData;
       else existing.episodes.push(episodeData);
-      
+
       // Move updated entry to front instead of full sort
       const index = data.history.indexOf(existing);
       if (index > 0) {
@@ -248,7 +248,7 @@
    */
   function removeFromHistory(anime_id, episode_number = null) {
     const data = loadData();
-    
+
     // Optimize: avoid map+filter chain
     const newHistory = [];
     for (const entry of data.history) {

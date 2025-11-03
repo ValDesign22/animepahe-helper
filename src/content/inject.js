@@ -3,12 +3,12 @@
     loadData,
     saveData,
     validateData,
+    invalidateCache,
     getHistory,
     updateHistory,
     getWatchlist,
     getAnime,
     registerAnime,
-    invalidateCache,
   } = window.AnimePaheHelperStorage;
   const {
     parsePlayPath,
@@ -42,7 +42,6 @@
 
     let anime = getAnime(info.anime_id);
     if (!anime) {
-      // Optimize: Use querySelector instead of XPath
       const titleElement = document.querySelector(
         "section article > div header > div h1 span",
       );
@@ -57,13 +56,11 @@
     }
     createWatchlistButton(anime);
 
-    // Optimize: Check for episode list with retry logic
-    // Maximum 10 retries (1 second total) to avoid infinite polling
     let retryCount = 0;
     const maxRetries = 10;
     const checkEpisodeList = () => {
       const episodeList = document.querySelector(".episode-list");
-      if (episodeList) {
+      if (episodeList && episodeList.children.length > 0) {
         createWatchedMask(episodeList, info.anime_id);
       } else if (retryCount < maxRetries) {
         retryCount++;
@@ -71,12 +68,8 @@
       }
     };
 
-    // Start checking after a shorter initial delay
-    if (document.readyState === "complete") {
-      checkEpisodeList();
-    } else {
-      window.addEventListener("load", checkEpisodeList);
-    }
+    if (document.readyState !== "loading") checkEpisodeList();
+    else window.addEventListener("DOMContentLoaded", checkEpisodeList);
   }
 
   function playHandler() {
@@ -84,7 +77,6 @@
     if (info) {
       const { anime_id, video_id } = info;
 
-      // Optimize: Use querySelector instead of XPath
       const titleElement = document.querySelector(
         "section article > div > div > div:nth-child(4) > a",
       );

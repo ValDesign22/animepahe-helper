@@ -55,10 +55,8 @@
     }
 
     const existingSection = document.getElementById(`animepahe-${type}`);
-    if (existingSection) {
-      existingSection.replaceWith(newSection);
-    } else {
-      // Optimize: Use querySelector instead of XPath
+    if (existingSection) existingSection.replaceWith(newSection);
+    else {
       const contentWrapper = document.querySelector("section article > div");
       if (contentWrapper) {
         contentWrapper.insertBefore(newSection, contentWrapper.firstChild);
@@ -288,7 +286,6 @@
   }
 
   function createWatchlistButton(anime) {
-    // Optimize: Use querySelector instead of XPath
     const header = document.querySelector("section article > div header > div");
 
     if (!header) return;
@@ -316,13 +313,10 @@
 
   function createWatchedMask(episodeList, anime_id) {
     const history = getHistory();
-    // Optimize: Use Set instead of Map for better performance
     const watchedEpisodes = new Set();
     history.forEach((entry) => {
       if (entry.anime && entry.anime.id === anime_id)
-        entry.episodes.forEach((ep) =>
-          watchedEpisodes.add(ep.episode_number),
-        );
+        entry.episodes.forEach((ep) => watchedEpisodes.add(ep.episode_number));
     });
 
     const episodes = episodeList.querySelectorAll(".episode");

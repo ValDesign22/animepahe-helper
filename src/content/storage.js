@@ -42,7 +42,6 @@
     watchlist: [],
   };
 
-  // Cache to avoid repeated localStorage parsing
   let dataCache = null;
   let saveScheduled = false;
 
@@ -50,10 +49,7 @@
    * @returns {Data}
    */
   function loadData() {
-    // Return cached data if available
-    if (dataCache !== null) {
-      return dataCache;
-    }
+    if (dataCache !== null) return dataCache;
 
     const rawData = localStorage.getItem(STORAGE_KEY);
     if (!rawData) {
@@ -75,7 +71,6 @@
         );
         dataCache = data;
         saveData(data);
-        return dataCache;
       }
 
       if (!data.animes) data.animes = {};
@@ -128,6 +123,10 @@
     return true;
   }
 
+  function invalidateCache() {
+    dataCache = null;
+  }
+
   /**
    * @param {Data} data
    */
@@ -155,19 +154,17 @@
 
   /**
    * @param {Data} data
-   * @param {boolean} immediate - If true, save immediately; otherwise debounce
+   * @param {boolean} immediate
    */
   function saveData(data, immediate = false) {
     dataCache = data;
 
     if (immediate) {
-      // Cancel any pending debounced save
       saveScheduled = false;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       return;
     }
 
-    // Debounce saves to reduce localStorage writes
     if (saveScheduled) return;
 
     saveScheduled = true;
@@ -208,14 +205,12 @@
       if (epIndex !== -1) existing.episodes[epIndex] = episodeData;
       else existing.episodes.push(episodeData);
 
-      // Move updated entry to front instead of full sort
       const index = data.history.indexOf(existing);
       if (index > 0) {
         data.history.splice(index, 1);
         data.history.unshift(existing);
       }
     } else {
-      // New entry always goes to front
       data.history.unshift({
         anime_id,
         episodes: [episodeData],
@@ -248,18 +243,14 @@
   function removeFromHistory(anime_id, episode_number = null) {
     const data = loadData();
 
-    // Optimize: avoid map+filter chain
     const newHistory = [];
     for (const entry of data.history) {
-      if (entry.anime_id !== anime_id) {
-        newHistory.push(entry);
-      } else if (episode_number) {
+      if (entry.anime_id !== anime_id) newHistory.push(entry);
+      else if (episode_number) {
         const episodes = entry.episodes.filter(
           (ep) => ep.episode_number !== episode_number,
         );
-        if (episodes.length > 0) {
-          newHistory.push({ ...entry, episodes });
-        }
+        if (episodes.length > 0) newHistory.push({ ...entry, episodes });
       }
     }
     data.history = newHistory;
@@ -358,17 +349,11 @@
     }
   }
 
-  /**
-   * Invalidate cache (useful when importing data)
-   */
-  function invalidateCache() {
-    dataCache = null;
-  }
-
   window.AnimePaheHelperStorage = {
     loadData,
     saveData,
     validateData,
+    invalidateCache,
     getHistory,
     updateHistory,
     getLastWatchedEpisode,
@@ -382,7 +367,6 @@
     registerAnime,
     deleteAnime,
     cleanUnusedAnimes,
-    invalidateCache,
   };
 
   console.log(

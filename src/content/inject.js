@@ -40,36 +40,34 @@
     const info = parseAnimePath();
     if (!info) return;
 
-    let anime = getAnime(info.anime_id);
-    if (!anime) {
-      const titleElement = document.querySelector(
-        "section article > div header > div h1 span",
-      );
-      const coverElement = document.querySelector(
-        "section article > div header > div > div > div > a > img",
-      );
-      const title = titleElement
-        ? titleElement.textContent.trim()
-        : "Unknown Title";
-      const cover = coverElement ? coverElement.getAttribute("src") : "";
-      anime = registerAnime(info.anime_id, title, cover);
-    }
-    createWatchlistButton(anime);
-
     let retryCount = 0;
     const maxRetries = 10;
-    const checkEpisodeList = () => {
+    const checkLoaded = () => {
       const episodeList = document.querySelector(".episode-list");
       if (episodeList && episodeList.children.length > 0) {
+        let anime = getAnime(info.anime_id);
+        const titleElement = document.querySelector(
+          "section article > div header > div h1 span",
+        );
+        const coverElement = document.querySelector(
+          "section article > div header > div > div > div > a > img",
+        );
+        const title = titleElement
+          ? titleElement.textContent.trim()
+          : "Unknown Title";
+        const cover = coverElement ? coverElement.getAttribute("src") : "";
+        anime = registerAnime(info.anime_id, title, cover);
+        createWatchlistButton(anime);
+
         createWatchedMask(episodeList, info.anime_id);
       } else if (retryCount < maxRetries) {
         retryCount++;
-        setTimeout(checkEpisodeList, 100);
+        setTimeout(checkLoaded, 100);
       }
     };
 
-    if (document.readyState !== "loading") checkEpisodeList();
-    else window.addEventListener("DOMContentLoaded", checkEpisodeList);
+    if (document.readyState !== "loading") checkLoaded();
+    else window.addEventListener("DOMContentLoaded", checkLoaded);
   }
 
   function playHandler() {
@@ -118,6 +116,7 @@
       document.createElement("div");
     userDropdown.id = "animePaheHelperDropdown";
     userDropdown.className = "dropdown";
+    userDropdown.style = "z-index: -1;";
 
     const profileBtn =
       userDropdown.querySelector("button") || document.createElement("button");

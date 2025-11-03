@@ -42,14 +42,20 @@
     watchlist: [],
   };
 
+  let dataCache = null;
+  let saveScheduled = false;
+
   /**
    * @returns {Data}
    */
   function loadData() {
+    if (dataCache !== null) return dataCache;
+
     const rawData = localStorage.getItem(STORAGE_KEY);
     if (!rawData) {
-      saveData(defaultData);
-      return structuredClone(defaultData);
+      dataCache = structuredClone(defaultData);
+      saveData(dataCache);
+      return dataCache;
     }
 
     try {
@@ -63,6 +69,7 @@
           "%c[AnimePahe Helper] Migration complete.",
           "color:#D5015B",
         );
+        dataCache = data;
         saveData(data);
       }
 
@@ -70,11 +77,13 @@
       if (!data.history) data.history = [];
       if (!data.watchlist) data.watchlist = [];
 
+      dataCache = data;
       return data;
     } catch (err) {
       console.error("[AnimePahe Helper] Failed to load data:", err);
-      saveData(defaultData);
-      return structuredClone(defaultData);
+      dataCache = structuredClone(defaultData);
+      saveData(dataCache);
+      return dataCache;
     }
   }
 
@@ -114,6 +123,10 @@
     return true;
   }
 
+  function invalidateCache() {
+    dataCache = null;
+  }
+
   /**
    * @param {Data} data
    */
@@ -141,9 +154,24 @@
 
   /**
    * @param {Data} data
+   * @param {boolean} immediate
    */
-  function saveData(data) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  function saveData(data, immediate = false) {
+    dataCache = data;
+
+    if (immediate) {
+      saveScheduled = false;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      return;
+    }
+
+    if (saveScheduled) return;
+
+    saveScheduled = true;
+    setTimeout(() => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      saveScheduled = false;
+    }, 100);
   }
 
   function getHistory() {
@@ -176,24 +204,19 @@
       );
       if (epIndex !== -1) existing.episodes[epIndex] = episodeData;
       else existing.episodes.push(episodeData);
+
+      const index = data.history.indexOf(existing);
+      if (index > 0) {
+        data.history.splice(index, 1);
+        data.history.unshift(existing);
+      }
     } else {
-      data.history.push({
+      data.history.unshift({
         anime_id,
         episodes: [episodeData],
       });
     }
 
-    data.history.sort((a, b) => {
-      const aLast = a.episodes.reduce(
-        (max, ep) => (ep.watched_at > max ? ep.watched_at : max),
-        0,
-      );
-      const bLast = b.episodes.reduce(
-        (max, ep) => (ep.watched_at > max ? ep.watched_at : max),
-        0,
-      );
-      return bLast - aLast;
-    });
     saveData(data);
   }
 
@@ -219,16 +242,18 @@
    */
   function removeFromHistory(anime_id, episode_number = null) {
     const data = loadData();
-    data.history = data.history
-      .map((entry) => {
-        if (entry.anime_id !== anime_id) return entry;
-        if (!episode_number) return null;
+
+    const newHistory = [];
+    for (const entry of data.history) {
+      if (entry.anime_id !== anime_id) newHistory.push(entry);
+      else if (episode_number) {
         const episodes = entry.episodes.filter(
           (ep) => ep.episode_number !== episode_number,
         );
-        return episodes.length ? { ...entry, episodes } : null;
-      })
-      .filter((entry) => entry !== null);
+        if (episodes.length > 0) newHistory.push({ ...entry, episodes });
+      }
+    }
+    data.history = newHistory;
 
     cleanUnusedAnimes(data);
     saveData(data);
@@ -328,6 +353,7 @@
     loadData,
     saveData,
     validateData,
+    invalidateCache,
     getHistory,
     updateHistory,
     getLastWatchedEpisode,

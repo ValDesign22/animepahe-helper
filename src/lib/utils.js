@@ -55,16 +55,9 @@
     }
 
     const existingSection = document.getElementById(`animepahe-${type}`);
-    if (existingSection) {
-      existingSection.replaceWith(newSection);
-    } else {
-      const contentWrapper = document.evaluate(
-        "/html/body/section/article/div",
-        document,
-        null,
-        XPathResult.FIRST_ORDERED_NODE_TYPE,
-        null,
-      ).singleNodeValue;
+    if (existingSection) existingSection.replaceWith(newSection);
+    else {
+      const contentWrapper = document.querySelector("section article > div");
       if (contentWrapper) {
         contentWrapper.insertBefore(newSection, contentWrapper.firstChild);
       }
@@ -293,13 +286,7 @@
   }
 
   function createWatchlistButton(anime) {
-    const header = document.evaluate(
-      "/html/body/section/article/div[1]/header/div",
-      document,
-      null,
-      XPathResult.FIRST_ORDERED_NODE_TYPE,
-      null,
-    ).singleNodeValue;
+    const header = document.querySelector("section article > div header > div");
 
     if (!header) return;
 
@@ -326,21 +313,19 @@
 
   function createWatchedMask(episodeList, anime_id) {
     const history = getHistory();
-    const watchedEpisodes = new Map();
+    const watchedEpisodes = new Set();
     history.forEach((entry) => {
       if (entry.anime && entry.anime.id === anime_id)
-        entry.episodes.forEach((ep) =>
-          watchedEpisodes.set(ep.episode_number, true),
-        );
+        entry.episodes.forEach((ep) => watchedEpisodes.add(ep.episode_number));
     });
 
     const episodes = episodeList.querySelectorAll(".episode");
+    const numberRegex = /Episode\s+(\d+)/i;
     episodes.forEach((episode) => {
       const episodeNumberElement = episode.querySelector(
         ".episode-label .episode-number",
       );
       if (!episodeNumberElement) return;
-      const numberRegex = /Episode\s+(\d+)/i;
       const match = episodeNumberElement.textContent.trim().match(numberRegex);
       if (!match) return;
       if (watchedEpisodes.has(match[1])) {

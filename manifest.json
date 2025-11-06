@@ -8,6 +8,9 @@
   },
   "permissions": ["storage", "scripting", "activeTab", "downloads"],
   "host_permissions": ["*://animepahe.si/*", "*://*.animepahe.si/*"],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' https://www.gstatic.com; object-src 'self'"
+  },
   "content_scripts": [
     {
       "matches": ["*://animepahe.si/*", "*://*.animepahe.si/*"],

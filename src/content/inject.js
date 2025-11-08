@@ -1,4 +1,4 @@
-(() => {
+(async () => {
   const {
     loadData,
     saveData,
@@ -17,6 +17,7 @@
     createWatchlistButton,
     createWatchedMask,
   } = window.AnimePaheHelperUtils;
+  const { enhancePlayer } = window.AnimePaheHelperPlayer;
 
   function homeHandler() {
     const watchlist = getWatchlist();
@@ -36,13 +37,13 @@
     );
   }
 
-  function animeHandler() {
+  async function animeHandler() {
     const info = parseAnimePath();
     if (!info) return;
 
     let retryCount = 0;
     const maxRetries = 10;
-    const checkLoaded = () => {
+    const checkLoaded = async () => {
       const episodeList = document.querySelector(".episode-list");
       if (episodeList && episodeList.children.length > 0) {
         let anime = getAnime(info.anime_id);
@@ -56,7 +57,12 @@
           ? titleElement.textContent.trim()
           : "Unknown Title";
         const cover = coverElement ? coverElement.getAttribute("src") : "";
-        anime = registerAnime(info.anime_id, title, cover);
+        anime = await registerAnime(
+          info.anime_id,
+          title,
+          cover,
+          await getFirstEpisode(info.anime_id),
+        );
         createWatchlistButton(anime);
 
         createWatchedMask(episodeList, info.anime_id);
@@ -66,11 +72,11 @@
       }
     };
 
-    if (document.readyState !== "loading") checkLoaded();
+    if (document.readyState !== "loading") await checkLoaded();
     else window.addEventListener("DOMContentLoaded", checkLoaded);
   }
 
-  function playHandler() {
+  async function playHandler() {
     const info = parsePlayPath();
     if (info) {
       const { anime_id, video_id } = info;
@@ -96,15 +102,33 @@
           .trim()
           .replace("Episode ", "")
           .trim();
-        registerAnime(anime_id, anime_title, anime_cover);
+        const anime = await registerAnime(
+          anime_id,
+          anime_title,
+          anime_cover,
+          await getFirstEpisode(anime_id),
+        );
         updateHistory(anime_id, episodeNumber, video_id);
 
         console.log(
           `%c[AnimePaheHelper] Updated history for ${anime_title} - Episode ${episodeNumber}`,
           "color:#D5015B",
         );
+
+        await enhancePlayer(anime, episodeNumber, video_id);
       }
     }
+  }
+
+  async function getFirstEpisode(anime_id) {
+    const response = await fetch(
+      `/api?m=release&sort=episode_asc&id=${anime_id}`,
+    );
+    const data = await response.json();
+    if (data && data.data && data.data.length > 0) {
+      return data.data[0].episode;
+    }
+    return 1;
   }
 
   function navBar() {
@@ -206,14 +230,14 @@
     navbar.appendChild(userDropdown);
   }
 
-  function handle() {
+  async function handle() {
     navBar();
     const path = window.location.pathname;
     if (path === "/") return homeHandler();
-    if (path.startsWith("/anime/")) return animeHandler();
-    if (path.startsWith("/play/")) return playHandler();
+    if (path.startsWith("/anime/")) return await animeHandler();
+    if (path.startsWith("/play/")) return await playHandler();
   }
 
-  if (document.readyState !== "loading") handle();
+  if (document.readyState !== "loading") await handle();
   else document.addEventListener("DOMContentLoaded", handle);
 })();

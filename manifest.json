@@ -7,7 +7,12 @@
     "48": "icons/animepahe-helper-48.png"
   },
   "permissions": ["storage", "scripting", "activeTab", "downloads"],
-  "host_permissions": ["*://animepahe.si/*", "*://*.animepahe.si/*"],
+  "host_permissions": [
+    "*://animepahe.si/*",
+    "*://*.animepahe.si/*",
+    "*://kwik.cx/*",
+    "*://*.kwik.cx/*"
+  ],
   "content_security_policy": {
     "extension_pages": "script-src 'self' https://www.gstatic.com; object-src 'self'"
   },
@@ -17,9 +22,18 @@
       "js": [
         "src/content/storage.js",
         "src/lib/utils.js",
+        "src/content/player.js",
         "src/content/inject.js"
       ],
-      "css": ["src/content/styles.css"]
+      "css": ["src/content/styles.css"],
+      "run_at": "document_end",
+      "all_frames": true
+    },
+    {
+      "matches": ["*://kwik.cx/*", "*://*.kwik.cx/*"],
+      "js": ["src/content/player.js"],
+      "run_at": "document_end",
+      "all_frames": true
     }
   ],
   "browser_specific_settings": {

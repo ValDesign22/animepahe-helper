@@ -7,11 +7,20 @@
   const STORAGE_KEY = "animepahe_helper_data";
   const CURRENT_VERSION = 2;
 
+  const DATA_URL =
+    "https://raw.githubusercontent.com/ValDesign22/anidb-title-dump/refs/heads/master/anidb_titles.json";
+  const CACHE_NAME = "anidb_title_dump";
+  const CACHE_STORE = "dumps";
+  const CACHE_KEY = "anidb";
+  const CACHE_TTL = 24 * 60 * 60 * 1000;
+
   /**
    * @typedef {Object} Anime
    * @property {string} id
+   * @property {number} anidb_id
    * @property {string} title
    * @property {string} cover
+   * @property {string} first_episode
    */
 
   /**
@@ -25,6 +34,7 @@
    * @property {string} episode_number
    * @property {string} video_id
    * @property {number} watched_at
+   * @property {number|null} player_time
    */
 
   /**
@@ -140,6 +150,7 @@
               episode_number: entry.episode,
               video_id: entry.video_id,
               watched_at: entry.watched_at,
+              player_time: entry.player_time || null,
             },
           ],
         };
@@ -183,11 +194,30 @@
   }
 
   /**
+   *
+   * @param {string} anime_id
+   * @param {string} episode_number
+   */
+  function getHistoryEpisode(anime_id, episode_number) {
+    const data = loadData();
+    const historyEntry = data.history.find(
+      (entry) => entry.anime_id === anime_id,
+    );
+    if (!historyEntry) return null;
+    return (
+      historyEntry.episodes.find(
+        (ep) => ep.episode_number === episode_number,
+      ) || null
+    );
+  }
+
+  /**
    * @param {string} anime_id
    * @param {string} episode
    * @param {string} video_id
+   * @param {number|null} player_time
    */
-  function updateHistory(anime_id, episode, video_id) {
+  function updateHistory(anime_id, episode, video_id, player_time = null) {
     const data = loadData();
     const now = Date.now();
     const existing = data.history.find((entry) => entry.anime_id === anime_id);
@@ -196,6 +226,7 @@
       episode_number: episode,
       video_id,
       watched_at: now,
+      player_time,
     };
 
     if (existing) {
@@ -311,14 +342,16 @@
    * @param {string} anime_id
    * @param {string} name
    * @param {string} cover
-   * @returns {Anime}
    */
-  function registerAnime(anime_id, name, cover) {
+  async function registerAnime(anime_id, name, cover, first_episode = "1") {
     const data = loadData();
+    const anidb_id = await getAniDBId(name);
     data.animes[anime_id] = {
       id: anime_id,
+      anidb_id: anidb_id,
       title: name,
       cover: cover,
+      first_episode: first_episode,
     };
     saveData(data);
     return data.animes[anime_id];
@@ -349,12 +382,81 @@
     }
   }
 
+  async function loadAnimeTitleDump() {
+    const db = await new Promise((resolve, reject) => {
+      const req = indexedDB.open(CACHE_NAME, 1);
+      req.onupgradeneeded = () => req.result.createObjectStore(CACHE_STORE);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+
+    const cached = await new Promise((resolve, reject) => {
+      const tx = db.transaction(CACHE_STORE, "readonly");
+      const store = tx.objectStore(CACHE_STORE);
+      const getReq = store.get(CACHE_KEY);
+      getReq.onsuccess = () => resolve(getReq.result);
+      getReq.onerror = () => reject(null);
+    });
+
+    const now = Date.now();
+    if (cached && now - cached.timestamp < CACHE_TTL) {
+      return cached.data;
+    }
+
+    let data;
+    try {
+      const response = await fetch(DATA_URL);
+      if (!response.ok) throw new Error(`Fetch failed: ${response.status}`);
+      data = await response.json();
+    } catch (err) {
+      console.error("[AnimePahe Helper] Failed to fetch title dump:", err);
+      return cached?.data || {};
+    }
+
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(CACHE_STORE, "readwrite");
+      const store = tx.objectStore(CACHE_STORE);
+      const putReq = store.put({ timestamp: now, data }, CACHE_KEY);
+      putReq.onsuccess = () => resolve();
+      putReq.onerror = () => reject(putReq.error);
+    });
+
+    return data;
+  }
+
+  /**
+   * @param {string} anime_title
+   * @param {string} language
+   */
+  async function getAniDBId(anime_title, language = "en") {
+    const titleDump = await loadAnimeTitleDump();
+    for (const entry of Object.values(titleDump)) {
+      if (
+        entry.titles.find(
+          (t) => t.title === anime_title && t.language === language,
+        )
+      ) {
+        console.log(
+          `%c[AnimePahe Helper] Found AniDB ID ${entry.id} for title "${anime_title}"`,
+          "color:#D5015B",
+        );
+        return entry.id;
+      }
+    }
+    console.log(
+      `%c[AnimePahe Helper] No AniDB ID found for title "${anime_title}"`,
+      "color:#D5015B",
+    );
+    return null;
+  }
+
   window.AnimePaheHelperStorage = {
     loadData,
     saveData,
     validateData,
     invalidateCache,
     getHistory,
+    getHistoryEpisode,
     updateHistory,
     getLastWatchedEpisode,
     removeFromHistory,
@@ -367,6 +469,8 @@
     registerAnime,
     deleteAnime,
     cleanUnusedAnimes,
+    loadAnimeTitleDump,
+    getAniDBId,
   };
 
   console.log(

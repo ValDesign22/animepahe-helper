@@ -35,6 +35,7 @@
    * @property {string} video_id
    * @property {number} watched_at
    * @property {number|null} player_time
+   * @property {number|null} duration
    */
 
   /**
@@ -124,7 +125,9 @@
             e === null ||
             typeof e.episode_number !== "string" ||
             typeof e.video_id !== "string" ||
-            typeof e.watched_at !== "number",
+            typeof e.watched_at !== "number" ||
+            (e.player_time !== null && typeof e.player_time !== "number") ||
+            (e.duration !== null && typeof e.duration !== "number"),
         ),
       )
     )
@@ -151,6 +154,7 @@
               video_id: entry.video_id,
               watched_at: entry.watched_at,
               player_time: entry.player_time || null,
+              duration: entry.duration || null,
             },
           ],
         };
@@ -216,36 +220,53 @@
    * @param {string} episode
    * @param {string} video_id
    * @param {number|null} player_time
+   * @param {number|null} duration
    */
-  function updateHistory(anime_id, episode, video_id, player_time = null) {
+  function updateHistory(
+    anime_id,
+    episode,
+    video_id,
+    player_time = null,
+    duration = null,
+  ) {
     const data = loadData();
     const now = Date.now();
-    const existing = data.history.find((entry) => entry.anime_id === anime_id);
-
     const episodeData = {
       episode_number: episode,
       video_id,
       watched_at: now,
       player_time,
+      duration,
     };
 
-    if (existing) {
-      const epIndex = existing.episodes.findIndex(
-        (ep) => ep.episode_number === episode,
-      );
-      if (epIndex !== -1) existing.episodes[epIndex] = episodeData;
-      else existing.episodes.push(episodeData);
+    let existing = data.history.find((entry) => entry.anime_id === anime_id);
 
-      const index = data.history.indexOf(existing);
-      if (index > 0) {
-        data.history.splice(index, 1);
-        data.history.unshift(existing);
-      }
-    } else {
-      data.history.unshift({
+    if (!existing) {
+      existing = {
         anime_id,
-        episodes: [episodeData],
-      });
+        episodes: [],
+      };
+      data.history.unshift(existing);
+    }
+
+    const epIndex = existing?.episodes.findIndex(
+      (ep) => ep.episode_number === episode,
+    );
+    if (epIndex !== -1) {
+      const oldEpisode = existing.episodes[epIndex];
+      existing.episodes[epIndex] = {
+        ...episodeData,
+        player_time: player_time ?? oldEpisode.player_time,
+        duration: duration ?? oldEpisode.duration,
+      };
+    } else {
+      existing.episodes.push(episodeData);
+    }
+
+    const index = data.history.indexOf(existing);
+    if (index > 0) {
+      data.history.splice(index, 1);
+      data.history.unshift(existing);
     }
 
     saveData(data);

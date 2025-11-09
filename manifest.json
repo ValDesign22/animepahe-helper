@@ -32,6 +32,7 @@
     {
       "matches": ["*://kwik.cx/*", "*://*.kwik.cx/*"],
       "js": ["src/content/player.js"],
+      "css": ["src/content/player.css"],
       "run_at": "document_end",
       "all_frames": true
     }

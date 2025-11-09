@@ -1,0 +1,27 @@
+.plyr__button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: #222222;
+
+  svg {
+    fill: none;
+  }
+
+  span {
+    font-size: 14px;
+    font-weight: 500;
+    margin: 0;
+  }
+}
+
+.plyr__button--hidden {
+  display: none;
+}
+
+.plyr__button--skip {
+  position: absolute;
+  bottom: 64px;
+  right: 48px;
+}

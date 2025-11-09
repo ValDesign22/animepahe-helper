@@ -10,6 +10,7 @@
       recap: "Skip Recap",
       intro: "Skip Intro",
       outro: "Skip Outro",
+      preview: "Skip Preview",
     };
 
     function waitForPlayer() {
@@ -24,13 +25,13 @@
     }
 
     function createSkipButton() {
-      const playerControls = document.querySelector(".plyr__controls");
+      const playerControls = document.querySelector(".plyr");
       if (playerControls) {
         const skipButton =
           playerControls.querySelector(".plyr__button--skip") ||
           document.createElement("button");
         skipButton.classList =
-          "plyr__control plyr__button plyr__button--skip plyr__button--hidden";
+          "plyr__button plyr__button--skip plyr__button--hidden";
         skipButton.setAttribute("plyr", "skip");
         skipButton.setAttribute("type", "button");
         skipButton.setAttribute("aria-label", "Skip Intro/Recap/Outro");
@@ -113,6 +114,12 @@
         case "skipOutro":
           setButtonAction("outro", data);
           break;
+        case "skipPreview":
+          setButtonAction("preview", data);
+          break;
+        case "hideSkipButton":
+          setButtonVisibility(false);
+          break;
       }
     }
 
@@ -120,10 +127,12 @@
   }
   // --- Parent Window Code ---
   else {
-    const { getHistoryEpisode, updateHistory } = window.AnimePaheHelperStorage;
+    const { getHistoryEpisode, updateHistory, getEpisodeTimestamps } =
+      window.AnimePaheHelperStorage;
 
     let iframe = null;
     let currentSession = null;
+    const demoTimestamps = null;
 
     async function waitForIframe() {
       return new Promise((resolve) => {
@@ -136,36 +145,61 @@
       });
     }
 
-    function handleMessage(event) {
+    async function handleMessage(event) {
       if (!iframe || event.source !== iframe.contentWindow) return;
 
       const { action, data } = event.data;
-      const { historyEntry } = currentSession;
+      const { historyEntry, anime, episodeNumber, video_id, timestamps } =
+        currentSession;
+
+      function send(action, data) {
+        iframe.contentWindow.postMessage({ action, data }, "*");
+      }
 
       switch (action) {
         case "playerReady":
-          if (!data) return;
+          if (!data) break;
           if (historyEntry?.player_time) {
-            console.log(historyEntry.player_time);
-            iframe.contentWindow.postMessage(
-              { action: "seekTo", data: historyEntry.player_time },
-              "*",
+            send("seekTo", historyEntry.player_time);
+            console.log(
+              `%c[AnimePaheHelper] Resumed playback at ${historyEntry.player_time}s`,
+              "color: #D5015B",
             );
           }
-          iframe.contentWindow.postMessage(
-            { action: "getDuration", data: null },
-            "*",
-          );
+          send("getDuration", null);
           break;
         case "getVideoTime":
           historyEntry.player_time = data;
 
-          const aniDBId = currentSession.anime.anidb_id;
-          if (!aniDBId) return;
-          const aniDBEpisodeNumber =
-            parseFloat(currentSession.episodeNumber) -
-            (parseInt(currentSession.anime.first_episode) - 1);
-          if (aniDBEpisodeNumber < 1) return;
+          if (!timestamps) break;
+
+          const skipRanges = [
+            ["skipRecap", timestamps.recap],
+            ["skipIntro", timestamps.opening],
+            ["skipOutro", timestamps.ending],
+            [
+              "skipPreview",
+              {
+                start: timestamps.preview_start,
+                end: historyEntry.duration,
+              },
+            ],
+          ];
+
+          let didSkip = false;
+          for (const [action, range] of skipRanges) {
+            if (
+              range.start >= 0 &&
+              data >= range.start &&
+              data <= (range.end || historyEntry.duration)
+            ) {
+              send(action, range.end || historyEntry.duration);
+              didSkip = true;
+              break;
+            }
+          }
+
+          if (!didSkip) send("hideSkipButton", null);
           break;
         case "videoDuration":
           historyEntry.duration = data;
@@ -173,17 +207,27 @@
       }
 
       updateHistory(
-        currentSession.anime.id,
-        currentSession.episodeNumber,
-        currentSession.video_id,
+        anime.id,
+        episodeNumber,
+        video_id,
         historyEntry?.player_time,
         historyEntry?.duration,
       );
     }
 
     async function enhancePlayer(anime, episodeNumber, video_id) {
-      currentSession = { anime, episodeNumber, video_id };
-      currentSession.historyEntry = getHistoryEpisode(anime.id, episodeNumber);
+      currentSession = {
+        anime,
+        episodeNumber,
+        video_id,
+        historyEntry: getHistoryEpisode(anime.id, episodeNumber),
+        timestamps: await getEpisodeTimestamps(
+          anime.anidb_id,
+          parseFloat(episodeNumber) - (parseInt(anime.first_episode, 10) - 1),
+        ),
+      };
+      console.log("%c[AnimePaheHelper] Current Session:", "color: #D5015B");
+      console.log(currentSession);
       iframe = await waitForIframe();
       if (!iframe) return;
 

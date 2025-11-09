@@ -7,11 +7,18 @@
   const STORAGE_KEY = "animepahe_helper_data";
   const CURRENT_VERSION = 2;
 
-  const DATA_URL =
+  const TITLES_DATA_URL =
     "https://raw.githubusercontent.com/ValDesign22/anidb-title-dump/refs/heads/master/anidb_titles.json";
-  const CACHE_NAME = "anidb_title_dump";
-  const CACHE_STORE = "dumps";
-  const CACHE_KEY = "anidb";
+  const TITLES_CACHE_NAME = "anidb_title_dump";
+  const TITLES_CACHE_STORE = "dumps";
+  const TITLES_CACHE_KEY = "anidb";
+
+  const TIMESTAMPS_DATA_URL =
+    "https://raw.githubusercontent.com/Ellivers/open-anime-timestamps/refs/heads/master/timestamps.json";
+  const TIMESTAMPS_CACHE_NAME = "anime_timestamps_cache";
+  const TIMESTAMPS_CACHE_STORE = "timestamps";
+  const TIMESTAMPS_CACHE_KEY = "timestamps";
+
   const CACHE_TTL = 24 * 60 * 60 * 1000;
 
   /**
@@ -403,46 +410,82 @@
     }
   }
 
-  async function loadAnimeTitleDump() {
+  async function loadDatabase(
+    data_url,
+    cache_name,
+    cache_store,
+    cache_key,
+    ttl = CACHE_TTL,
+  ) {
     const db = await new Promise((resolve, reject) => {
-      const req = indexedDB.open(CACHE_NAME, 1);
-      req.onupgradeneeded = () => req.result.createObjectStore(CACHE_STORE);
-      req.onsuccess = () => resolve(req.result);
+      const req = indexedDB.open(cache_name, 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(cache_store)) {
+          db.createObjectStore(cache_store);
+        }
+      };
+      req.onsuccess = () => {
+        const db = req.result;
+        db.onversionchange = () => db.close();
+        resolve(db);
+      };
       req.onerror = () => reject(req.error);
     });
 
     const cached = await new Promise((resolve, reject) => {
-      const tx = db.transaction(CACHE_STORE, "readonly");
-      const store = tx.objectStore(CACHE_STORE);
-      const getReq = store.get(CACHE_KEY);
+      const tx = db.transaction(cache_store, "readonly");
+      const store = tx.objectStore(cache_store);
+      const getReq = store.get(cache_key);
       getReq.onsuccess = () => resolve(getReq.result);
       getReq.onerror = () => reject(null);
     });
 
     const now = Date.now();
-    if (cached && now - cached.timestamp < CACHE_TTL) {
-      return cached.data;
+    if (cached && now - cached.timestamp < ttl) {
+      return structuredClone(cached.data);
     }
 
     let data;
     try {
-      const response = await fetch(DATA_URL);
+      const response = await fetch(data_url);
       if (!response.ok) throw new Error(`Fetch failed: ${response.status}`);
       data = await response.json();
     } catch (err) {
-      console.error("[AnimePahe Helper] Failed to fetch title dump:", err);
+      console.error(
+        `[AnimePahe Helper] Failed to fetch data from ${data_url}:`,
+        err,
+      );
       return cached?.data || {};
     }
 
     await new Promise((resolve, reject) => {
-      const tx = db.transaction(CACHE_STORE, "readwrite");
-      const store = tx.objectStore(CACHE_STORE);
-      const putReq = store.put({ timestamp: now, data }, CACHE_KEY);
+      const tx = db.transaction(cache_store, "readwrite");
+      const store = tx.objectStore(cache_store);
+      const putReq = store.put({ timestamp: now, data }, cache_key);
       putReq.onsuccess = () => resolve();
       putReq.onerror = () => reject(putReq.error);
     });
 
     return data;
+  }
+
+  async function loadAnimeTitleDump() {
+    return await loadDatabase(
+      TITLES_DATA_URL,
+      TITLES_CACHE_NAME,
+      TITLES_CACHE_STORE,
+      TITLES_CACHE_KEY,
+    );
+  }
+
+  async function loadTimestamps() {
+    return await loadDatabase(
+      TIMESTAMPS_DATA_URL,
+      TIMESTAMPS_CACHE_NAME,
+      TIMESTAMPS_CACHE_STORE,
+      TIMESTAMPS_CACHE_KEY,
+    );
   }
 
   /**
@@ -471,6 +514,15 @@
     return null;
   }
 
+  async function getEpisodeTimestamps(anidb_id, episode_number) {
+    const timestamps = await loadTimestamps();
+    return (
+      timestamps[anidb_id]?.find(
+        (ep) => ep.episode_number === episode_number,
+      ) || null
+    );
+  }
+
   window.AnimePaheHelperStorage = {
     loadData,
     saveData,
@@ -492,6 +544,7 @@
     cleanUnusedAnimes,
     loadAnimeTitleDump,
     getAniDBId,
+    getEpisodeTimestamps,
   };
 
   console.log(

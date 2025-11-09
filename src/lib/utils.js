@@ -187,15 +187,7 @@
       animeSnapshot.appendChild(cover);
 
       if (type === "history") {
-        const playButton = document.createElement("svg");
-        playButton.className = "play-button";
-        playButton.viewBox = "0 0 150 150";
-        playButton.setAttribute("alt", "Play Video");
-        const playIcon = document.createElement("polygon");
-        playIcon.setAttribute("points", "20, 20, 20, 140, 120, 80");
-        playIcon.setAttribute("fill", "#fff");
-        playButton.appendChild(playIcon);
-        animeSnapshot.appendChild(playButton);
+        animeSnapshot.innerHTML += `<svg class="play-button" viewBox="0 0 150 150" alt="Play Video"><polygon points="20, 20, 20, 140, 120, 80" fill="#fff"/></svg>`;
       }
 
       const playLink = document.createElement("a");
@@ -269,6 +261,24 @@
         animeNumberWrap.appendChild(animeNumber);
 
         animeLabel.appendChild(animeNumberWrap);
+
+        if (lastEpisode.player_time && lastEpisode.duration) {
+          console.log(lastEpisode);
+          const animeProgressWrap = document.createElement("div");
+          animeProgressWrap.className = "anime-progress-wrap";
+
+          const progressPercent = Math.min(
+            Math.max((lastEpisode.player_time / lastEpisode.duration) * 100, 0),
+            100,
+          );
+
+          const animeProgressBar = document.createElement("div");
+          animeProgressBar.className = "anime-progress-bar";
+          animeProgressBar.style.width = `${progressPercent}%`;
+
+          animeProgressWrap.appendChild(animeProgressBar);
+          animeLabel.appendChild(animeProgressWrap);
+        }
       }
 
       animeLabelWrap.appendChild(animeLabel);

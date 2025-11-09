@@ -109,9 +109,9 @@
               width: 100%;
               height: auto;
               margin: 0;
-              -webkit-transition: all 0.5s ease-out;
-              -moz-transition: all 0.5s ease-out;
-              transition: all 0.5s ease-out;
+              -webkit-transition: all 0.25s ease-out;
+              -moz-transition: all 0.25s ease-out;
+              transition: all 0.25s ease-out;
             }
 
             .play-button {
@@ -126,13 +126,13 @@
               opacity: 0;
               cursor: pointer;
               -webkit-transition:
-                opacity 0.2s ease-out,
+                opacity 0.5s ease-out,
                 top 0.2s ease-out;
               -moz-transition:
-                opacity 0.2s ease-out,
+                opacity 0.5s ease-out,
                 top 0.2s ease-out;
               transition:
-                opacity 0.2s ease-out,
+                opacity 0.5s ease-out,
                 top 0.2s ease-out;
             }
 
@@ -194,6 +194,7 @@
               display: flex;
               -webkit-justify-content: space-between;
               justify-content: space-between;
+              position: relative;
 
               .anime-name-wrap {
                 position: relative;
@@ -247,13 +248,30 @@
                   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
                 }
               }
+
+              .anime-progress-wrap {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                height: 5px;
+                background: rgba(255, 255, 255, 0.2);
+
+                .anime-progress-bar {
+                  width: 0%;
+                  height: 100%;
+                  background: #d5015b;
+                  transition: width 0.25s ease;
+                }
+              }
             }
           }
 
           &:hover .anime-snapshot {
             svg {
-              opacity: 0.9;
+              opacity: 0.75;
               top: 0;
+              filter: drop-shadow(0px 1px 0px rgba(0, 0, 0, 0.25));
             }
 
             img {
@@ -350,5 +368,39 @@ section.main
         color: #d5015b;
       }
     }
+  }
+}
+
+#animePaheHelperDropdown {
+  button {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+    background: none;
+    color: #fff;
+    border: none;
+    padding: 8px 15px;
+    margin-right: auto;
+    transition: all 0.5s ease;
+
+    &::after {
+      transition: transform 0.3s ease;
+    }
+
+    &[aria-expanded="true"]::after {
+      transform: rotate(-180deg);
+    }
+
+    &:hover {
+      background: #d5015b;
+    }
+  }
+
+  .dropdown-menu {
+    background: #000;
+    border: 1px solid #d5015b;
+    padding: 0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   }
 }

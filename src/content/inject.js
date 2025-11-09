@@ -140,11 +140,10 @@
       document.createElement("div");
     userDropdown.id = "animePaheHelperDropdown";
     userDropdown.className = "dropdown";
-    userDropdown.style = "z-index: -1;";
 
     const profileBtn =
       userDropdown.querySelector("button") || document.createElement("button");
-    profileBtn.className = "btn btn-secondary dropdown-toggle";
+    profileBtn.className = "dropdown-toggle";
     profileBtn.type = "button";
     profileBtn.id = "userDropdownMenuButton";
     profileBtn.setAttribute("data-toggle", "dropdown");
@@ -227,7 +226,7 @@
 
     userDropdown.appendChild(dropdownMenu);
 
-    navbar.appendChild(userDropdown);
+    navbar.prepend(userDropdown);
   }
 
   async function handle() {

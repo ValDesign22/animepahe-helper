@@ -263,7 +263,6 @@
         animeLabel.appendChild(animeNumberWrap);
 
         if (lastEpisode.player_time && lastEpisode.duration) {
-          console.log(lastEpisode);
           const animeProgressWrap = document.createElement("div");
           animeProgressWrap.className = "anime-progress-wrap";
 

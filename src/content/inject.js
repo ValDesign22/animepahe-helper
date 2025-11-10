@@ -2,7 +2,6 @@
   const {
     loadData,
     saveData,
-    validateData,
     invalidateCache,
     getHistory,
     updateHistory,
@@ -152,9 +151,6 @@
       reader.onload = (e) => {
         try {
           const importedData = JSON.parse(e.target.result);
-          if (!validateData(importedData)) {
-            throw new Error("Invalid data format.");
-          }
           invalidateCache();
           saveData(importedData, true);
           alert("Data imported successfully!");

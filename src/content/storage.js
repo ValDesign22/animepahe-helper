@@ -108,40 +108,6 @@
   /**
    * @param {Data} data
    */
-  function validateData(data) {
-    if (typeof data !== "object" || data === null) return false;
-    if (typeof data.version !== "number") return false;
-    if (typeof data.animes !== "object" || data.animes === null) return false;
-    if (!Array.isArray(data.history)) return false;
-    if (!Array.isArray(data.watchlist)) return false;
-    if (
-      data.history.some(
-        (h) =>
-          typeof h !== "object" ||
-          h === null ||
-          typeof h.anime_id !== "string" ||
-          !Array.isArray(h.episodes),
-      )
-    )
-      return false;
-    if (
-      data.history.some((h) =>
-        h.episodes.some(
-          (e) =>
-            typeof e !== "object" ||
-            e === null ||
-            typeof e.episode_number !== "string" ||
-            typeof e.video_id !== "string" ||
-            typeof e.watched_at !== "number" ||
-            (e.player_time !== null && typeof e.player_time !== "number") ||
-            (e.duration !== null && typeof e.duration !== "number"),
-        ),
-      )
-    )
-      return false;
-    if (data.watchlist.some((id) => typeof id !== "string")) return false;
-    return true;
-  }
 
   function invalidateCache() {
     dataCache = null;
@@ -538,7 +504,6 @@
   window.AnimePaheHelperStorage = {
     loadData,
     saveData,
-    validateData,
     invalidateCache,
     getHistory,
     getHistoryEpisode,

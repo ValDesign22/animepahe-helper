@@ -57,12 +57,7 @@
           ? titleElement.textContent.trim()
           : "Unknown Title";
         const cover = coverElement ? coverElement.getAttribute("src") : "";
-        anime = await registerAnime(
-          info.anime_id,
-          title,
-          cover,
-          await getFirstEpisode(info.anime_id),
-        );
+        anime = await registerAnime(info.anime_id, title, cover);
         createWatchlistButton(anime);
 
         createWatchedMask(episodeList, info.anime_id);
@@ -102,12 +97,7 @@
           .trim()
           .replace("Episode ", "")
           .trim();
-        const anime = await registerAnime(
-          anime_id,
-          anime_title,
-          anime_cover,
-          await getFirstEpisode(anime_id),
-        );
+        const anime = await registerAnime(anime_id, anime_title, anime_cover);
         updateHistory(anime_id, episodeNumber, video_id);
 
         console.log(
@@ -118,17 +108,6 @@
         await enhancePlayer(anime, episodeNumber, video_id);
       }
     }
-  }
-
-  async function getFirstEpisode(anime_id) {
-    const response = await fetch(
-      `/api?m=release&sort=episode_asc&id=${anime_id}`,
-    );
-    const data = await response.json();
-    if (data && data.data && data.data.length > 0) {
-      return data.data[0].episode;
-    }
-    return 1;
   }
 
   function navBar() {

@@ -27,7 +27,7 @@
    * @property {number} anidb_id
    * @property {string} title
    * @property {string} cover
-   * @property {string} first_episode
+   * @property {number} first_episode
    */
 
   /**
@@ -371,18 +371,30 @@
    * @param {string} name
    * @param {string} cover
    */
-  async function registerAnime(anime_id, name, cover, first_episode = "1") {
+  async function registerAnime(anime_id, name, cover) {
     const data = loadData();
-    const anidb_id = await getAniDBId(name);
+    const existing = data.animes[anime_id];
     data.animes[anime_id] = {
       id: anime_id,
-      anidb_id: anidb_id,
+      anidb_id: existing?.anidb_id || (await getAniDBId(name)),
       title: name,
       cover: cover,
-      first_episode: first_episode,
+      first_episode:
+        existing?.first_episode || (await getFirstEpisode(anime_id)),
     };
     saveData(data);
     return data.animes[anime_id];
+  }
+
+  async function getFirstEpisode(anime_id) {
+    const response = await fetch(
+      `/api?m=release&sort=episode_asc&id=${anime_id}`,
+    );
+    const data = await response.json();
+    if (data && data.data && data.data.length > 0) {
+      return data.data[0].episode;
+    }
+    return 1;
   }
 
   /**

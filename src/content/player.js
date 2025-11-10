@@ -76,7 +76,7 @@
 
       createSkipButton();
 
-      player.addEventListener("loadeddata", () => {
+      player.addEventListener("loadedmetadata", () => {
         window.parent.postMessage({ action: "playerReady", data: true }, "*");
       });
 
@@ -132,7 +132,6 @@
 
     let iframe = null;
     let currentSession = null;
-    const demoTimestamps = null;
 
     async function waitForIframe() {
       return new Promise((resolve) => {
@@ -159,6 +158,7 @@
       switch (action) {
         case "playerReady":
           if (!data) break;
+          console.log("%c[AnimePaheHelper] Player is ready", "color: #D5015B");
           if (historyEntry?.player_time) {
             send("seekTo", historyEntry.player_time);
             console.log(
@@ -170,6 +170,8 @@
           break;
         case "getVideoTime":
           historyEntry.player_time = data;
+
+          if (!historyEntry.duration) send("getDuration", null);
 
           if (!timestamps) break;
 
@@ -202,7 +204,7 @@
           if (!didSkip) send("hideSkipButton", null);
           break;
         case "videoDuration":
-          historyEntry.duration = data;
+          if (data && data > 0) historyEntry.duration = data;
           break;
       }
 
@@ -210,12 +212,13 @@
         anime.id,
         episodeNumber,
         video_id,
-        historyEntry?.player_time,
-        historyEntry?.duration,
+        historyEntry.player_time,
+        historyEntry.duration,
       );
     }
 
     async function enhancePlayer(anime, episodeNumber, video_id) {
+      console.log("%c[AnimePaheHelper] Enhancing player...", "color: #D5015B");
       currentSession = {
         anime,
         episodeNumber,
@@ -223,15 +226,17 @@
         historyEntry: getHistoryEpisode(anime.id, episodeNumber),
         timestamps: await getEpisodeTimestamps(
           anime.anidb_id,
-          parseFloat(episodeNumber) - (parseInt(anime.first_episode, 10) - 1),
+          parseFloat(episodeNumber) - (anime.first_episode - 1),
         ),
       };
-      console.log("%c[AnimePaheHelper] Current Session:", "color: #D5015B");
-      console.log(currentSession);
       iframe = await waitForIframe();
       if (!iframe) return;
 
       window.addEventListener("message", handleMessage);
+      console.log(
+        "%c[AnimePaheHelper] Player enhancement complete",
+        "color: #D5015B",
+      );
     }
 
     window.AnimePaheHelperPlayer = { enhancePlayer };

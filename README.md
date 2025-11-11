@@ -14,13 +14,17 @@ Enhances the [AnimePahe](https://animepahe.si) website with a set of useful feat
 
 - 🧠 **Clean UI Integration**
   Seamlessly fits into AnimePahe’s existing design — no intrusive popups or layout breaks.
+  
+- ⏩ **Intro & Outro Skipping**
+  Skip anime intros and outros with a single click, uses timestamps from [Ellivers/open-anime-timestamps](https://github.com/Ellivers/open-anime-timestamps).
+  
+- ☁️ **Online Sync**
+  Sync your watch history and watchlist across multiple devices using cloud storage.
 
 ---
 
 ## 🧩 Planned Features
 
-- ⏩ **Intro & Outro Skipping** — Button to skip intros and outros based on [Ellivers/open-anime-timestamps](https://github.com/Ellivers/open-anime-timestamps)
-- ☁️ **Online Sync** — Save your watch history to the cloud and access it across devices.
 - 💾 **Cross-browser Support** — Chromium-based browsers (Chrome, Edge, Brave, etc.).
 
 ---

@@ -8,6 +8,7 @@
     getWatchlist,
     getAnime,
     registerAnime,
+    startSync,
   } = window.AnimePaheHelperStorage;
   const {
     parsePlayPath,
@@ -198,6 +199,19 @@
       URL.revokeObjectURL(url);
     });
     dropdownMenu.appendChild(exportItem);
+
+    const syncItem =
+      dropdownMenu.querySelector("#syncData") ||
+      document.createElement("button");
+    syncItem.className = "dropdown-item";
+    syncItem.id = "syncData";
+    syncItem.textContent = "Sync Data (Cloud)";
+    syncItem.addEventListener("click", async () => {
+      await startSync();
+      alert("Data synchronized with cloud storage.");
+      window.location.reload();
+    });
+    dropdownMenu.appendChild(syncItem);
 
     userDropdown.appendChild(dropdownMenu);
 

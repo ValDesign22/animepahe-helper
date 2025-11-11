@@ -7,6 +7,9 @@
   const STORAGE_KEY = "animepahe_helper_data";
   const CURRENT_VERSION = 2;
 
+  const SYNC_PREFIX = "animepahe_sync_";
+  const MAX_ITEM_BYTES = 8192;
+
   const TITLES_DATA_URL =
     "https://raw.githubusercontent.com/ValDesign22/anidb-title-dump/refs/heads/master/anidb_titles.json";
   const TITLES_CACHE_NAME = "anidb_title_dump";
@@ -48,6 +51,7 @@
   /**
    * @typedef {Object} Data
    * @property {number} version
+   * @property {number} updated_at
    * @property {{[anime_id: string]: Anime}} animes
    * @property {Array<HistoryEntry>} history
    * @property {Array<string>} watchlist
@@ -145,11 +149,14 @@
    * @param {boolean} immediate
    */
   function saveData(data, immediate = false) {
-    dataCache = data;
+    dataCache = {
+      ...data,
+      updated_at: Date.now(),
+    };
 
     if (immediate) {
       saveScheduled = false;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(dataCache));
       return;
     }
 
@@ -157,7 +164,7 @@
 
     saveScheduled = true;
     setTimeout(() => {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(dataCache));
       saveScheduled = false;
     }, 100);
   }
@@ -501,6 +508,123 @@
     );
   }
 
+  function chunkData(obj) {
+    const jsonString = JSON.stringify(obj);
+    const encoder = new TextEncoder();
+    const encoded = encoder.encode(jsonString);
+
+    const chunks = [];
+    let offset = 0;
+    const safeMaxBytes = MAX_ITEM_BYTES - 1024;
+    while (offset < encoded.length) {
+      const chunk = encoded.slice(offset, offset + safeMaxBytes);
+      const chunkString = new TextDecoder().decode(chunk);
+      chunks.push(chunkString);
+      offset += safeMaxBytes;
+    }
+    return chunks;
+  }
+
+  async function syncData(data) {
+    try {
+      const keys = await browser.storage.sync.getKeys();
+      const toRemove = Object.keys(keys).filter((key) =>
+        key.startsWith(SYNC_PREFIX),
+      );
+      if (toRemove.length > 0) {
+        await browser.storage.sync.remove(toRemove);
+      }
+
+      const chunks = chunkData(data);
+      const storeObj = {};
+      chunks.forEach((chunk, index) => {
+        storeObj[`${SYNC_PREFIX}${index}`] = chunk;
+      });
+      await browser.storage.sync.set(storeObj);
+    } catch (err) {
+      console.error(
+        "%c[AnimePahe Helper] Failed to sync data:",
+        "color:#D5015B",
+        err,
+      );
+    }
+  }
+
+  async function loadSyncData() {
+    try {
+      const keys = await browser.storage.sync.getKeys();
+      const chunkKeys = keys
+        .filter((key) => key.startsWith(SYNC_PREFIX))
+        .sort((a, b) => {
+          const indexA = parseInt(a.slice(SYNC_PREFIX.length), 10);
+          const indexB = parseInt(b.slice(SYNC_PREFIX.length), 10);
+          return indexA - indexB;
+        });
+
+      if (chunkKeys.length === 0) return null;
+
+      const storedChunks = await browser.storage.sync.get(chunkKeys);
+      let combinedJson = "";
+      for (const key of chunkKeys) {
+        combinedJson += storedChunks[key];
+      }
+
+      return JSON.parse(combinedJson);
+    } catch (err) {
+      console.error(
+        "%c[AnimePahe Helper] Failed to load sync data:",
+        "color:#D5015B",
+        err,
+      );
+      return null;
+    }
+  }
+
+  async function startSync() {
+    console.log(
+      "%c[AnimePahe Helper] Starting data synchronization...",
+      "color:#D5015B",
+    );
+
+    const localData = loadData();
+    const remoteData = await loadSyncData();
+
+    if (!remoteData) {
+      console.log(
+        "%c[AnimePahe Helper] No remote sync data found. Uploading local data...",
+        "color:#D5015B",
+      );
+      await syncData(localData);
+      console.log(
+        "%c[AnimePahe Helper] Data synchronization complete.",
+        "color:#D5015B",
+      );
+      return;
+    }
+
+    const localUpdatedAt = localData.updated_at || 0;
+    const remoteUpdatedAt = remoteData.updated_at || 0;
+
+    if (remoteUpdatedAt > localUpdatedAt) {
+      console.log(
+        "%c[AnimePahe Helper] Remote data is newer. Merging into local data...",
+        "color:#D5015B",
+      );
+      saveData(remoteData, true);
+    } else {
+      console.log(
+        "%c[AnimePahe Helper] Local data is newer. Uploading to remote storage...",
+        "color:#D5015B",
+      );
+      await syncData(localData);
+    }
+
+    console.log(
+      "%c[AnimePahe Helper] Data synchronization complete.",
+      "color:#D5015B",
+    );
+  }
+
   window.AnimePaheHelperStorage = {
     loadData,
     saveData,
@@ -522,6 +646,7 @@
     loadAnimeTitleDump,
     getAniDBId,
     getEpisodeTimestamps,
+    startSync,
   };
 
   console.log(

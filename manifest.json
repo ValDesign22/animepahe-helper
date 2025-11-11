@@ -13,9 +13,6 @@
     "*://kwik.cx/*",
     "*://*.kwik.cx/*"
   ],
-  "content_security_policy": {
-    "extension_pages": "script-src 'self' https://www.gstatic.com; object-src 'self'"
-  },
   "content_scripts": [
     {
       "matches": ["*://animepahe.si/*", "*://*.animepahe.si/*"],

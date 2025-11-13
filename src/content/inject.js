@@ -206,7 +206,7 @@
       document.createElement("button");
     loadSyncItem.className = "dropdown-item";
     loadSyncItem.id = "loadSyncData";
-    loadSyncItem.textContent = "Load Sync Data (Cloud)";
+    loadSyncItem.textContent = "Load Sync Data";
     loadSyncItem.addEventListener("click", async () => {
       const syncDataContent = await loadSyncData();
       if (syncDataContent) {
@@ -225,7 +225,7 @@
       document.createElement("button");
     syncItem.className = "dropdown-item";
     syncItem.id = "syncData";
-    syncItem.textContent = "Sync Data (Cloud)";
+    syncItem.textContent = "Sync Data";
     syncItem.addEventListener("click", async () => {
       const data = loadData();
       await syncData(data);

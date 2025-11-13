@@ -580,51 +580,6 @@
     }
   }
 
-  async function startSync() {
-    console.log(
-      "%c[AnimePahe Helper] Starting data synchronization...",
-      "color:#D5015B",
-    );
-
-    const localData = loadData();
-    const remoteData = await loadSyncData();
-
-    if (!remoteData) {
-      console.log(
-        "%c[AnimePahe Helper] No remote sync data found. Uploading local data...",
-        "color:#D5015B",
-      );
-      await syncData(localData);
-      console.log(
-        "%c[AnimePahe Helper] Data synchronization complete.",
-        "color:#D5015B",
-      );
-      return;
-    }
-
-    const localUpdatedAt = localData.updated_at || 0;
-    const remoteUpdatedAt = remoteData.updated_at || 0;
-
-    if (remoteUpdatedAt > localUpdatedAt) {
-      console.log(
-        "%c[AnimePahe Helper] Remote data is newer. Merging into local data...",
-        "color:#D5015B",
-      );
-      saveData(remoteData, true);
-    } else {
-      console.log(
-        "%c[AnimePahe Helper] Local data is newer. Uploading to remote storage...",
-        "color:#D5015B",
-      );
-      await syncData(localData);
-    }
-
-    console.log(
-      "%c[AnimePahe Helper] Data synchronization complete.",
-      "color:#D5015B",
-    );
-  }
-
   window.AnimePaheHelperStorage = {
     loadData,
     saveData,
@@ -646,7 +601,8 @@
     loadAnimeTitleDump,
     getAniDBId,
     getEpisodeTimestamps,
-    startSync,
+    syncData,
+    loadSyncData,
   };
 
   console.log(

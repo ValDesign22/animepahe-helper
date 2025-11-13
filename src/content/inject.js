@@ -8,7 +8,8 @@
     getWatchlist,
     getAnime,
     registerAnime,
-    startSync,
+    syncData,
+    loadSyncData,
   } = window.AnimePaheHelperStorage;
   const {
     parsePlayPath,
@@ -200,6 +201,25 @@
     });
     dropdownMenu.appendChild(exportItem);
 
+    const loadSyncItem =
+      dropdownMenu.querySelector("#loadSyncData") ||
+      document.createElement("button");
+    loadSyncItem.className = "dropdown-item";
+    loadSyncItem.id = "loadSyncData";
+    loadSyncItem.textContent = "Load Sync Data (Cloud)";
+    loadSyncItem.addEventListener("click", async () => {
+      const syncDataContent = await loadSyncData();
+      if (syncDataContent) {
+        invalidateCache();
+        saveData(syncDataContent, true);
+        alert("Sync data loaded successfully!");
+        window.location.reload();
+      } else {
+        alert("No sync data found in the cloud.");
+      }
+    });
+    dropdownMenu.appendChild(loadSyncItem);
+
     const syncItem =
       dropdownMenu.querySelector("#syncData") ||
       document.createElement("button");
@@ -207,9 +227,9 @@
     syncItem.id = "syncData";
     syncItem.textContent = "Sync Data (Cloud)";
     syncItem.addEventListener("click", async () => {
-      await startSync();
-      alert("Data synchronized with cloud storage.");
-      window.location.reload();
+      const data = loadData();
+      await syncData(data);
+      alert("Data synced to the cloud successfully!");
     });
     dropdownMenu.appendChild(syncItem);
 

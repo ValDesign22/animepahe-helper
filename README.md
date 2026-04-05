@@ -1,6 +1,6 @@
 # AnimePahe Helper
 
-Enhances the [AnimePahe](https://animepahe.si) website with a set of useful features to make watching and tracking anime more convenient.
+Enhances the [AnimePahe](https://animepahe.pw) website with a set of useful features to make watching and tracking anime more convenient.
 
 ---
 
@@ -36,7 +36,7 @@ Enhances the [AnimePahe](https://animepahe.si) website with a set of useful feat
 1. Go to the [AnimePahe Helper Firefox Add-on page](https://addons.mozilla.org/en-US/firefox/addon/animepahe-helper/).
 2. Click on **"Add to Firefox"**.
 3. Confirm any prompts to complete the installation.
-4. Once installed, navigate to [AnimePahe](https://animepahe.si) and enjoy the features!
+4. Once installed, navigate to [AnimePahe](https://animepahe.pw) and enjoy the features!
 
 ### 🛠 Manual Installation (Development Version)
 1. Clone or download this repository:
@@ -46,6 +46,6 @@ Enhances the [AnimePahe](https://animepahe.si) website with a set of useful feat
 2. Open Firefox and navigate to `about:debugging#/runtime/this-firefox`.
 3. Click on **"Load Temporary Add-on..."**.
 4. Select the `manifest.json` file from the cloned repository.
-5. Now you can go to [AnimePahe](https://animepahe.si) and enjoy the features!
+5. Now you can go to [AnimePahe](https://animepahe.pw) and enjoy the features!
 
 > ⚠️ **Note:** Temporary add-ons will be removed when Firefox is restarted.

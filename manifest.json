@@ -8,8 +8,8 @@
   },
   "permissions": ["storage", "scripting", "activeTab", "downloads"],
   "host_permissions": [
-    "*://animepahe.si/*",
-    "*://*.animepahe.si/*",
+    "*://animepahe.pw/*",
+    "*://*.animepahe.pw/*",
     "*://animepahe.com/*",
     "*://*.animepahe.com/*",
     "*://kwik.cx/*",
